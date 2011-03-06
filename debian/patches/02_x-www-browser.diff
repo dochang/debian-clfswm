@@ -1,0 +1,11 @@
+--- a/src/clfswm-util.lisp
++++ b/src/clfswm-util.lisp
+@@ -709,7 +709,7 @@
+ ;;;;;| Various definitions
+ ;;;;;`-----
+ 
+-(defun show-help (&optional (browser "dillo") (tempfile "/tmp/clfswm.html"))
++(defun show-help (&optional (browser "x-www-browser") (tempfile "/tmp/clfswm.html"))
+   "Show current keys and buttons bindings"
+   (ignore-errors
+     (produce-doc-html-in-file tempfile))

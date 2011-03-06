@@ -1,0 +1,36 @@
+clfswm for Debian
+-----------------
+
+* HowTo start CLFSWM
+
+CLFSWM can be started using /usr/bin/clfswm.  By default, CLFSWM
+assumes that you want to use it with CLISP.  You can configure it to
+use another implementation based on the following rules:
+
+1. the first command line argument
+2. environment variable $LISP
+3. the first line like "debian=<impl>" in its configuration file.
+4. clisp
+
+For example, if you want to use SBCL, you can invoke clfswm like this:
+
+ $ /usr/bin/clfswm sbcl
+
+or
+
+ $ export LISP=sbcl
+ $ /usr/bin/clfswm
+
+or put a line such as '; debian=sbcl' in the configuration file of
+clfswm, then
+
+ $ /usr/bin/clfswm
+
+CLFSWM handles clisp, sbcl and cmucl internally.  If you want to use
+another implementation, for example 'foobar', then clfswm try to
+execute the command `clfswm-foobar`.  The implementation name must
+match the following pattern:
+
+ [A-Za-z0-9._][A-Za-z0-9._+-]*
+
+ -- Desmond O. Chang <dochang@gmail.com>,  Sun, 06 Mar 2011 23:56:54 +0800

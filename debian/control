@@ -1,0 +1,35 @@
+Source: clfswm
+Section: x11
+Priority: optional
+Maintainer: Debian Common Lisp Team <pkg-common-lisp-devel@lists.alioth.debian.org>
+Uploaders: Desmond O. Chang <dochang@gmail.com>
+Build-Depends: debhelper (>= 7.0.50~)
+Build-Depends-Indep: asciidoc, xmlto
+Standards-Version: 3.9.1
+Homepage: http://common-lisp.net/project/clfswm/
+Vcs-Git: git://git.debian.org/pkg-common-lisp/clfswm.git
+Vcs-Browser: http://git.debian.org/?p=pkg-common-lisp/clfswm.git;a=summary
+
+Package: clfswm
+Architecture: all
+Depends: ${misc:Depends}, clisp-module-clx | cl-clx-sbcl | cmucl-source
+Provides: x-window-manager
+Description: A(nother) Common Lisp FullScreen Window Manager
+ CLFSWM is a 100% Common Lisp X11 window manager (based on Tinywm and
+ Stumpwm. Many thanks to them).  It can be driven only with the
+ keyboard or with the mouse.
+ .
+ A display contains a root frame and its children. A child can be a
+ window or another frame. The root frame or its children can be the
+ current root. The current root is fullscreen maximized (no
+ decorations, no buttons, no menus: nothing, just the application
+ fullscreen!).
+ .
+ CLFSWM is highly dynamic. By default there is only one frame (the root
+ frame). Other frames are created/deleted on the fly. A window can be
+ in more than one frame, so it can have multiple views of the same
+ windows.
+ .
+ Using CLFSWM is like walking through a tree of frames and
+ windows. Enter in a child to make it the current root and make it
+ fullscreen maximized. Leave it to make its parent the current root.

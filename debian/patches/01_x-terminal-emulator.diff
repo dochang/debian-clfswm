@@ -1,0 +1,72 @@
+Use x-terminal-emulator by default.
+--- a/src/bindings-second-mode.lisp
++++ b/src/bindings-second-mode.lisp
+@@ -140,11 +140,11 @@
+   (define-second-key ("v" :control :shift) 'paste-selection-no-clear)
+   (define-second-key ("Delete" :control) 'remove-current-child)
+   (define-second-key ("Delete") 'delete-current-child)
+-  (define-shell (#\c) b-start-xterm "start an xterm" "cd $HOME && exec xterm")
++  (define-shell (#\c) b-start-x-terminal-emulator "start an x-terminal-emulator" "cd $HOME && exec x-terminal-emulator")
+   (define-shell (#\e) b-start-emacs "start emacs" "cd $HOME && exec emacs")
+   (define-shell (#\e :control) b-start-emacsremote
+     "start an emacs for another user"
+-    "exec xterm -e emacsremote")
++    "exec x-terminal-emulator -e emacsremote")
+   (define-shell (#\h) b-start-xclock "start an xclock" "exec xclock -d")
+   (define-second-key ("F10" :mod-1) 'fast-layout-switch)
+   (define-second-key ("F10" :shift :control) 'toggle-show-root-frame)
+--- a/src/clfswm-info.lisp
++++ b/src/clfswm-info.lisp
+@@ -496,7 +496,7 @@
+       (add-key hash-second 'run-program-from-query-string *second-keys*)
+       (add-key hash-second 'eval-from-query-string *second-keys*)
+       (add-key hash-second 'set-open-in-new-frame-in-parent-frame-nw-hook *second-keys*)
+-      (add-key hash-second 'b-start-xterm *second-keys*)
++      (add-key hash-second 'b-start-x-terminal-emulator *second-keys*)
+       (add-key hash-second 'b-start-emacs *second-keys*)
+       (show-key-binding hash hash-second :no-producing-doc))))
+ 
+--- a/src/config.lisp
++++ b/src/config.lisp
+@@ -131,7 +131,7 @@
+   "Config(Corner group): The clfswm terminal name")
+ ;;(defparameter *clfswm-terminal-cmd* (format nil "xterm -T ~A -e /bin/bash --noprofile --norc" *clfswm-terminal-name*)
+ ;;(defparameter *clfswm-terminal-cmd* (format nil "urxvt -name ~A" *clfswm-terminal-name*)
+-(defparameter *clfswm-terminal-cmd* (format nil "xterm -T ~A" *clfswm-terminal-name*)
++(defparameter *clfswm-terminal-cmd* (format nil "x-terminal-emulator -T ~A" *clfswm-terminal-name*)
+   "Config(Corner group): The clfswm terminal command.
+ This command must set the window title to *clfswm-terminal-name*")
+ 
+--- a/contrib/reboot-halt.lisp
++++ b/contrib/reboot-halt.lisp
+@@ -39,7 +39,7 @@
+ 
+ 
+ (defun do-with-terminal (command)
+-  (do-shell (format nil "xterm -e '~A'" command)))
++  (do-shell (format nil "x-terminal-emulator -e '~A'" command)))
+ ;;(do-shell (format nil "xterm -e 'echo ~A; sleep 3'" command)))  ;; test
+ 
+ (defun do-nothing ()
+--- a/doc/keys.txt
++++ b/doc/keys.txt
+@@ -122,7 +122,7 @@
+   Control Shift        V               Paste the selection in the current frame - Do not clear the selection after paste
+   Control              Delete          Remove the current child from its parent frame
+                        Delete          Delete the current child and its children in all frames
+-                       C               start an xterm
++                       C               start an x-terminal-emulator
+                        E               start emacs
+   Control              E               start an emacs for another user
+                        H               start an xclock
+--- a/doc/keys.html
++++ b/doc/keys.html
+@@ -1220,7 +1220,7 @@
+             C
+         </td>
+         <td style="color:#0000ff" nowrap>
+-          start an xterm
++          start an x-terminal-emulator
+         </td>
+       </tr>
+       <tr>

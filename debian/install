@@ -1,0 +1,2 @@
+*.asd src contrib usr/share/common-lisp/source/clfswm
+clfswm usr/bin

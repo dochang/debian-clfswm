@@ -1,0 +1,6 @@
+?package(clfswm): \
+  needs="wm" \
+  section="Window Managers" \
+  title="CLFSWM" \
+  longtitle="A(nother) Common Lisp window manager" \
+  command="clfswm"
