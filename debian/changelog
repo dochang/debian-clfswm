@@ -1,6 +1,8 @@
 clfswm (20110418.git050d0a2-1) UNRELEASED; urgency=low
 
   * delete the sample comment in debian/rules
+  * debian/copyright
+    + fix typo
 
  --
 
