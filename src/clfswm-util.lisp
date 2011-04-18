@@ -5,7 +5,7 @@
 ;;; Documentation: Utility
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -106,8 +106,8 @@
     (let ((name (query-string "Frame name"))
 	  (x (/ (query-number "Frame x in percent (%)") 100))
 	  (y (/ (query-number "Frame y in percent (%)") 100))
-	  (w (/ (query-number "Frame width in percent (%)") 100))
-	  (h (/ (query-number "Frame height in percent (%)") 100)))
+	  (w (/ (query-number "Frame width in percent (%)" 100) 100))
+	  (h (/ (query-number "Frame height in percent (%)" 100) 100)))
       (push (create-frame :name name :x x :y y :w w :h h)
 	    (frame-child *current-child*))))
   (leave-second-mode))
@@ -219,23 +219,25 @@
 
 (defun cut-current-child ()
   "Cut the current child to the selection"
-  (copy-current-child)
   (hide-all *current-child*)
+  (copy-current-child)
   (remove-child-in-frame *current-child* (find-parent-frame *current-child* *current-root*))
   (setf *current-child* *current-root*)
-  (show-all-children))
+  (show-all-children t))
 
 (defun remove-current-child ()
   "Remove the current child from its parent frame"
   (hide-all *current-child*)
   (remove-child-in-frame *current-child* (find-parent-frame *current-child* *current-root*))
   (setf *current-child* *current-root*)
+  (show-all-children t)
   (leave-second-mode))
 
 (defun delete-current-child ()
   "Delete the current child and its children in all frames"
   (hide-all *current-child*)
   (delete-child-and-children-in-all-frames *current-child*)
+  (show-all-children t)
   (leave-second-mode))
 
 
@@ -291,10 +293,10 @@
 	 (font (xlib:open-font *display* *identify-font-string*))
 	 (window (xlib:create-window :parent *root*
 				     :x 0 :y 0
-				     :width (- (xlib:screen-width *screen*) 2)
+				     :width (- (xlib:screen-width *screen*) (* *border-size* 2))
 				     :height (* 5 (+ (xlib:max-char-ascent font) (xlib:max-char-descent font)))
 				     :background (get-color *identify-background*)
-				     :border-width 1
+				     :border-width *border-size*
 				     :border (get-color *identify-border*)
 				     :colormap (xlib:screen-default-colormap *screen*)
 				     :event-mask '(:exposure)))
@@ -401,11 +403,10 @@
 ;;; Focus by functions
 (defun focus-frame-by (frame)
   (when (frame-p frame)
-    (hide-all *current-root*)
     (focus-all-children frame (or (find-parent-frame frame *current-root*)
 				  (find-parent-frame frame)
 				  *root-frame*))
-    (show-all-children)))
+    (show-all-children t)))
 
 
 (defun focus-frame-by-name ()
@@ -440,14 +441,13 @@
 
 ;;; Delete by functions
 (defun delete-frame-by (frame)
-  (hide-all *current-root*)
   (unless (child-equal-p frame *root-frame*)
     (when (child-equal-p frame *current-root*)
       (setf *current-root* *root-frame*))
     (when (child-equal-p frame *current-child*)
       (setf *current-child* *current-root*))
     (remove-child-in-frame frame (find-parent-frame frame)))
-  (show-all-children))
+  (show-all-children t))
 
 
 (defun delete-frame-by-name ()
@@ -464,11 +464,10 @@
 ;;; Move by function
 (defun move-child-to (child frame-dest)
   (when (and child (frame-p frame-dest))
-    (hide-all *current-root*)
     (remove-child-in-frame child (find-parent-frame child))
     (pushnew child (frame-child frame-dest))
     (focus-all-children child frame-dest)
-    (show-all-children)))
+    (show-all-children t)))
 
 (defun move-current-child-by-name ()
   "Move current child in a named frame"
@@ -488,10 +487,9 @@
 ;;; Copy by function
 (defun copy-child-to (child frame-dest)
   (when (and child (frame-p frame-dest))
-    (hide-all *current-root*)
     (pushnew child (frame-child frame-dest))
     (focus-all-children child frame-dest)
-    (show-all-children)))
+    (show-all-children t)))
 
 (defun copy-current-child-by-name ()
   "Copy current child in a named frame"
@@ -533,12 +531,8 @@
   (hide-all-frames-info))
 
 
-
-
-
-
 (defun move-frame (frame parent orig-x orig-y)
-  (when (and frame parent)
+  (when (and frame parent (not (child-equal-p frame *current-root*)))
     (hide-all-children frame)
     (with-slots (window) frame
       (move-window window orig-x orig-y #'display-frame-info (list frame))
@@ -546,9 +540,8 @@
 	    (frame-y frame) (y-px->fl (xlib:drawable-y window) parent)))
     (show-all-children)))
 
-
 (defun resize-frame (frame parent orig-x orig-y)
-  (when (and frame parent)
+  (when (and frame parent (not (child-equal-p frame *current-root*)))
     (hide-all-children frame)
     (with-slots (window) frame
       (resize-window window orig-x orig-y #'display-frame-info (list frame))
@@ -582,15 +575,14 @@ mouse-fun is #'move-frame or #'resize-frame"
 		(unless (equal (type-of child) 'frame)
 		  (setf child (find-frame-window child *current-root*)))
 		(setf parent (find-parent-frame child)))))
+	(when (and (frame-p child) (not (child-equal-p child *current-root*)))
+	  (funcall mouse-fn child parent root-x root-y))
 	(when (and child parent
 		   (focus-all-children child parent
 				       (not (and (child-equal-p *current-child* *current-root*)
 						 (xlib:window-p *current-root*)))))
 	  (when (show-all-children)
-	    (setf to-replay nil)))
-	(when (equal (type-of child) 'frame)
-	  (funcall mouse-fn child parent root-x root-y))
-	(show-all-children))
+	    (setf to-replay nil))))
       (if to-replay
 	  (replay-button-event)
 	  (stop-button-event)))))
@@ -638,8 +630,12 @@ For window: set current child to window or its parent according to window-parent
 		 (xlib:window
 		  (if (managed-window-p child parent)
 		      (funcall mouse-fn parent (find-parent-frame parent) root-x root-y)
-		      (funcall (cond ((eql mouse-fn #'move-frame) #'move-window)
-				     ((eql mouse-fn #'resize-frame) #'resize-window))
+		      (funcall (cond ((or (eql mouse-fn #'move-frame)
+                                          (eql mouse-fn #'move-frame-constrained))
+                                      #'move-window)
+				     ((or (eql mouse-fn #'resize-frame)
+                                          (eql mouse-fn #'resize-frame-constrained))
+                                      #'resize-window))
 			       child root-x root-y)))
 		 (frame (funcall mouse-fn child parent root-x root-y)))
 	       (show-all-children)))
@@ -733,11 +729,10 @@ For window: set current child to window or its parent according to window-parent
     "Jump to slot"
     (let ((jump-child (aref key-slots current-slot)))
       (when (find-child jump-child *root-frame*)
-	(hide-all *current-root*)
 	(setf *current-root* jump-child
 	      *current-child* *current-root*)
 	(focus-all-children *current-child* *current-child*)
-	(show-all-children))))
+	(show-all-children t))))
 
   (defun bind-or-jump (n)
     "Bind or jump to a slot (a frame or a window)"
@@ -863,11 +858,11 @@ For window: set current child to window or its parent according to window-parent
 ;;; Children navigation
 (defun with-movement-select-next-brother ()
   "Select the next brother frame"
-  (with-movement (select-next-brother)))
+  (with-movement (select-next-brother-simple)))
 
 (defun with-movement-select-previous-brother ()
   "Select the previous brother frame"
-  (with-movement (select-previous-brother)))
+  (with-movement (select-previous-brother-simple)))
 
 (defun with-movement-select-next-level ()
   "Select the next level"
@@ -879,7 +874,7 @@ For window: set current child to window or its parent according to window-parent
 
 (defun with-movement-select-next-child ()
   "Select the next child"
-  (with-movement (select-next-child)))
+  (with-movement (select-next-child-simple)))
 
 
 
@@ -1134,12 +1129,12 @@ For window: set current child to window or its parent according to window-parent
     "Store the current child and switch to the previous one"
     (let ((current-child *current-child*))
       (when last-child
-	(hide-all *current-root*)
 	(setf *current-root* last-child
 	      *current-child* *current-root*)
 	(focus-all-children *current-child* *current-child*)
-	(show-all-children))
-      (setf last-child current-child))))
+	(show-all-children t))
+      (setf last-child current-child))
+    (leave-second-mode)))
 
 
 
@@ -1238,10 +1233,10 @@ For window: set current child to window or its parent according to window-parent
 
 
 ;;; Standard menu functions - Based on the XDG specifications
-(defparameter *xdg-section-list* (append '(TextEditor FileManager WebBrowser)
-					 '(AudioVideo Audio Video Development Education Game Graphics Network Office Settings System Utility)
-					 '(TerminalEmulator Archlinux Screensaver))
-  "Config(Menu group): Standard menu sections")
+(defconfig *xdg-section-list* (append '(TextEditor FileManager WebBrowser)
+                                      '(AudioVideo Audio Video Development Education Game Graphics Network Office Settings System Utility)
+                                      '(TerminalEmulator Archlinux Screensaver))
+  'Menu "Standard menu sections")
 
 
 (defun um-create-xdg-section-list (menu)
@@ -1532,7 +1527,7 @@ For window: set current child to window or its parent according to window-parent
 					   :width width
 					   :height height
 					   :background (get-color *notify-window-background*)
-					   :border-width 1
+					   :border-width *border-size*
 					   :border (get-color *notify-window-border*)
 					   :colormap (xlib:screen-default-colormap *screen*)
 					   :event-mask '(:exposure :key-press))
@@ -1562,13 +1557,12 @@ For window: set current child to window or its parent according to window-parent
 		    (return win)))))
     (if window
         (let ((parent (find-parent-frame window)))
-          (hide-all-children *current-root*)
           (setf *current-child* parent)
 	  (put-child-on-top window parent)
           (when maximized
             (setf *current-root* parent))
 	  (focus-all-children window parent)
-          (show-all-children))
+          (show-all-children t))
         (funcall run-fn))))
 
 

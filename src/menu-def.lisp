@@ -7,7 +7,7 @@
 ;;; Note: Mod-1 is the Alt or Meta key, Mod-2 is the Numlock key.
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -126,16 +126,16 @@
 (add-menu-key 'frame-fill-menu "Down" 'current-frame-fill-down)
 (add-menu-key 'frame-fill-menu "Left" 'current-frame-fill-left)
 (add-menu-key 'frame-fill-menu "Right" 'current-frame-fill-right)
-(add-menu-key 'frame-fill-menu #\a 'current-frame-fill-all-dir)
-(add-menu-key 'frame-fill-menu #\v 'current-frame-fill-vertical)
-(add-menu-key 'frame-fill-menu #\h 'current-frame-fill-horizontal)
+(add-menu-key 'frame-fill-menu "a" 'current-frame-fill-all-dir)
+(add-menu-key 'frame-fill-menu "v" 'current-frame-fill-vertical)
+(add-menu-key 'frame-fill-menu "h" 'current-frame-fill-horizontal)
 
 (add-menu-key 'frame-resize-menu "Up" 'current-frame-resize-up)
 (add-menu-key 'frame-resize-menu "Down" 'current-frame-resize-down)
 (add-menu-key 'frame-resize-menu "Left" 'current-frame-resize-left)
 (add-menu-key 'frame-resize-menu "Right" 'current-frame-resize-right)
-(add-menu-key 'frame-resize-menu #\d 'current-frame-resize-all-dir)
-(add-menu-key 'frame-resize-menu #\a 'current-frame-resize-all-dir-minimal)
+(add-menu-key 'frame-resize-menu "a" 'current-frame-resize-all-dir)
+(add-menu-key 'frame-resize-menu "m" 'current-frame-resize-all-dir-minimal)
 
 
 (add-menu-comment 'frame-focus-policy "-=- For the current frame -=-")
@@ -165,11 +165,12 @@
 
 
 (add-menu-key 'frame-miscellaneous-menu "s" 'show-all-frames-info)
-(add-menu-key 'frame-miscellaneous-menu "i" 'hide-all-frames-info)
+(add-menu-key 'frame-miscellaneous-menu "a" 'hide-all-frames-info)
 (add-menu-key 'frame-miscellaneous-menu "h" 'hide-current-frame-window)
 (add-menu-key 'frame-miscellaneous-menu "w" 'show-current-frame-window)
 (add-menu-key 'frame-miscellaneous-menu "u" 'renumber-current-frame)
 (add-menu-key 'frame-miscellaneous-menu "x" 'explode-current-frame)
+(add-menu-key 'frame-miscellaneous-menu "i" 'implode-current-frame)
 
 
 

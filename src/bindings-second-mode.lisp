@@ -7,7 +7,7 @@
 ;;; Note: Mod-1 is the Alt or Meta key, Mod-2 is the Numlock key.
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -117,7 +117,7 @@
   (define-second-key ("Tab" :mod-1) 'select-next-child)
   (define-second-key ("Tab" :mod-1 :shift) 'select-previous-child)
   (define-second-key ("Tab" :mod-1 :control) 'select-next-subchild)
-  (define-second-key ("Tab" :shift) 'switch-to-last-child)
+  (define-second-key ("Tab") 'switch-to-last-child)
   (define-second-key ("Return" :mod-1) 'enter-frame)
   (define-second-key ("Return" :mod-1 :shift) 'leave-frame)
   (define-second-key ("Return" :mod-5) 'frame-toggle-maximize)
@@ -185,6 +185,7 @@ Or do corners actions"
   (or (do-corner-action root-x root-y *corner-second-mode-right-button*)
       (mouse-focus-move/resize-generic root-x root-y #'resize-frame nil)))
 
+
 (defun sm-mouse-middle-click (window root-x root-y)
   "Do actions on corners"
   (declare (ignore window))
@@ -234,6 +235,18 @@ Or do corners actions"
   (mouse-focus-move/resize-generic root-x root-y #'resize-frame t))
 
 
+(defun sm-mouse-click-to-focus-and-move-window-constrained (window root-x root-y)
+  "Move (constrained by other frames) and focus the current child - Create a new frame on the root window"
+  (declare (ignore window))
+  (mouse-focus-move/resize-generic root-x root-y #'move-frame-constrained t))
+
+
+(defun sm-mouse-click-to-focus-and-resize-window-constrained (window root-x root-y)
+  "Resize (constrained by other frames) and focus the current child - Create a new frame on the root window"
+  (declare (ignore window))
+  (mouse-focus-move/resize-generic root-x root-y #'resize-frame-constrained t))
+
+
 
 (defun set-default-second-mouse ()
   (define-second-mouse (1) 'sm-mouse-click-to-focus-and-move)
@@ -241,6 +254,8 @@ Or do corners actions"
   (define-second-mouse (3) 'sm-mouse-click-to-focus-and-resize)
   (define-second-mouse (1 :mod-1) 'sm-mouse-click-to-focus-and-move-window)
   (define-second-mouse (3 :mod-1) 'sm-mouse-click-to-focus-and-resize-window)
+  (define-second-mouse (1 :mod-1 :shift) 'sm-mouse-click-to-focus-and-move-window-constrained)
+  (define-second-mouse (3 :mod-1 :shift) 'sm-mouse-click-to-focus-and-resize-window-constrained)
   (define-second-mouse (1 :control :mod-1) 'mouse-move-child-over-frame)
   (define-second-mouse (4) 'sm-mouse-select-next-level)
   (define-second-mouse (5) 'sm-mouse-select-previous-level)

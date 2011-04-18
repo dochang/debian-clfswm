@@ -5,7 +5,7 @@
 ;;; Documentation: Main functions
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -252,7 +252,6 @@
   (when read-conf-file-p
     (read-conf-file))
   (create-configuration-menu :clear t)
-  (add-all-config-default-value)
   (call-hook *main-entrance-hook*)
   (handler-case
       (open-display display protocol)

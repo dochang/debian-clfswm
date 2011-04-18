@@ -5,7 +5,7 @@
 ;;; Documentation: OSD (On Screen Display) for presentations.
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -75,7 +75,7 @@
   (let* ((modifiers (state->modifiers state))
 	 (keysym (keysym->keysym-name (xlib:keycode->keysym *display* code 0))))
     (when (frame-p *current-child*)
-      (push (list #'equal #'is-osd-window-p t) *never-managed-window-list*))
+      (push (list #'is-osd-window-p nil) *never-managed-window-list*))
     (raise-window *osd-window*)
     (rotatef (xlib:gcontext-foreground *osd-gc*) (xlib:gcontext-background *osd-gc*))
     (xlib:draw-rectangle *osd-window* *osd-gc*

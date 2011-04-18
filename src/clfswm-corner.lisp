@@ -5,7 +5,7 @@
 ;;; Documentation: Corner functions
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -119,9 +119,9 @@ Corner is one of :bottom-right :bottom-left :top-right :top-left"
 
 
 (let (win)
-  (defun equal-clfswm-terminal-id (window)
+  (defun equal-clfswm-terminal (window)
     (when win
-      (equal (xlib:window-id window) (xlib:window-id win))))
+      (xlib:window-equal window win)))
   (defun close-clfswm-terminal ()
     (when win
       (xlib:destroy-window win)

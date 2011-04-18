@@ -1,3 +1,122 @@
+2011-04-18  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-pack.lisp (resize-frame-constrained): Takes care of
+	border size.
+	(implode-frame, implode-current-frame): New functions. Absorb all
+	frames subchildren in frame. Explode frame opposite.
+
+2011-04-17  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-pack.lisp (move-frame-constrained)
+	(resize-frame-constrained): New function. Move and resize frame
+	with the mouse constrained by other frame brothers.
+
+2011-04-14  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-util.lisp (with-movement-select-next-brother)
+	(with-movement-select-previous-brother)
+	(with-movement-select-next-child): Use a simple method (do not
+	enter in the circulate mode) to allow to circulate in all children
+	or brothers.
+
+	* src/clfswm-menu.lisp (open-menu): Save info hash table keys
+	instead of deleting newly created keys.
+
+2011-03-21  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-internal.lisp (x-px->fl, y-px->fl): Takes care of
+	border size.
+
+2011-03-20  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-info.lisp (show-config-variable): call
+	produce-conf-var-doc.
+
+2011-03-18  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-autodoc.lisp (produce-conf-var-doc-html): Produce a
+	documentation for all configurable variables in CLFSWM -
+	HTML version.
+
+	* src/clfswm-internal.lisp (leave-frame): Hide all children except
+	the current window.
+
+2011-03-16  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-autodoc.lisp (produce-all-docs): Produce a
+	documentation for all configurable variables in CLFSWM.
+
+	* src/clfswm-layout.lisp (set-gimp-layout): Display a notify
+	window with the help on the GIMP layout.
+
+2011-03-12  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/menu-def.lisp: Menu update to prevent cursor keys clash.
+
+	* clfswm.asd: Change compilation order to prevent undefined
+	variables.
+
+	* src/clfswm-internal.lisp (show-child(frame)): Handle properly
+	the show-root-frame-p parameter.
+
+2011-03-11  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-util.lisp (move-frame, resize-frame): Do not move or
+	resize a frame when it's the current root.
+
+2011-03-10  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-internal.lisp (show-all-children): Handle properly
+	duplicated child in multipe frames.
+
+2011-03-09  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* contrib/volume-mode.lisp (set-default-volume-keys): Add more
+	keybindings (up/down, right/left) to raise/lower the volume.
+
+	* src/clfswm-layout.lisp: Add a variable border size for frames
+	and windows.
+
+2011-03-08  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-util.lisp (cut-current-child, remove-current-child)
+	(delete-current-child): Hide the current child before doing the
+	action.
+
+	* src/clfswm-internal.lisp (show-all-children): Hide windows not
+	in the current root before displaying those in current root.
+	Remove all hide-all unnecessary calls.
+
+	* src/clfswm-configuration.lisp (save-variables-in-conf-file):
+	Save only variables with a different value than there original
+	value.
+
+2011-03-07  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-info.lisp (show-config-variable): Use the new
+	defconfig method.
+
+	* src/clfswm-autodoc.lisp (produce-configuration-variables): Use
+	the new defconfig method.
+
+	* src/clfswm-configuration.lisp (create-configuration-menu):
+	Change the config system with a more lispy one and a less string
+	based one: (defconfig name value group doc).
+
+
+2011-03-06  Philippe Brochard  <pbrochard@common-lisp.net>
+
+	* src/clfswm-internal.lisp (show-all-children): Simplify the
+	selection method.
+	(show-child): Display an unmanaged window whe  it's the current
+	child.
+	(show-all-children): add the ability to display all child from
+	*root-frame* and hide all those who are not in *current-root*.
+	-> remove hide-all-children when needed.
+
+	* src/xlib-util.lisp (move-window,resize-window): Add a
+	*color-move-window* border when moving or resizing a window.
+
 2011-03-04  Philippe Brochard  <pbrochard@common-lisp.net>
 
 	* src/clfswm-internal.lisp (show-all-children): Perform only one

@@ -5,7 +5,7 @@
 ;;; Documentation: Second mode functions
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@
 					  :x x :y y
 					  :width *sm-width* :height *sm-height*
 					  :background (get-color *sm-background-color*)
-					  :border-width 1
+					  :border-width *border-size*
 					  :border (get-color *sm-border-color*)
 					  :colormap (xlib:screen-default-colormap *screen*)
 					  :event-mask '(:exposure))

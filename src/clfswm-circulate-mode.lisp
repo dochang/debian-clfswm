@@ -5,7 +5,7 @@
 ;;; Documentation: Main functions
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -85,9 +85,7 @@
   (no-focus)
   (let ((frame-is-root? (and (child-equal-p *current-root* *current-child*)
 			     (not (child-equal-p *current-root* *root-frame*)))))
-    (if frame-is-root?
-	(hide-all *current-root*)
-	(select-current-frame nil))
+    (select-current-frame nil)
     (unless (and *circulate-orig* *circulate-parent*)
       (reset-circulate-brother))
     (let ((len (length *circulate-orig*)))
@@ -98,7 +96,7 @@
 		  *current-child* (frame-selected-child *circulate-parent*))))
 	(when frame-is-root?
 	  (setf *current-root* *current-child*))))
-    (show-all-children)
+    (show-all-children t)
     (draw-circulate-mode-window)))
 
 (defun reorder-subchild (direction)
@@ -206,7 +204,7 @@
 						 :width *circulate-width*
 						 :height *circulate-height*
 						 :background (get-color *circulate-background*)
-						 :border-width 1
+						 :border-width *border-size*
 						 :border (get-color *circulate-border*)
 						 :colormap (xlib:screen-default-colormap *screen*)
 						 :event-mask '(:exposure :key-press))
@@ -278,3 +276,33 @@
     (setf *circulate-orig* (frame-child *current-child*)
 	  *circulate-parent* nil)
     (circulate-mode :subchild-direction +1)))
+
+
+(defun select-next-child-simple ()
+  "Select the next child (do not enter in circulate mode)"
+  (when (frame-p *current-child*)
+    (with-slots (child) *current-child*
+      (setf child (rotate-list child)))
+    (show-all-children)))
+
+
+
+(defun reorder-brother-simple (reorder-fun)
+  (unless (child-equal-p *current-child* *current-root*)
+    (no-focus)
+    (select-current-frame nil)
+    (let ((parent-frame (find-parent-frame *current-child*)))
+      (when (frame-p parent-frame)
+        (with-slots (child) parent-frame
+          (setf child (funcall reorder-fun child)
+                *current-child* (frame-selected-child parent-frame))))
+      (show-all-children t))))
+
+
+(defun select-next-brother-simple ()
+  "Select the next brother frame (do not enter in circulate mode)"
+  (reorder-brother-simple #'rotate-list))
+
+(defun select-previous-brother-simple ()
+  "Select the previous brother frame (do not enter in circulate mode)"
+  (reorder-brother-simple #'anti-rotate-list))

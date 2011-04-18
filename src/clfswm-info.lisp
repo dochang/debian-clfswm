@@ -5,7 +5,7 @@
 ;;; Documentation: Info function (see the end of this file for user definition
 ;;; --------------------------------------------------------------------------
 ;;;
-;;; (C) 2010 Philippe Brochard <hocwp@free.fr>
+;;; (C) 2011 Philippe Brochard <hocwp@free.fr>
 ;;;
 ;;; This program is free software; you can redistribute it and/or modify
 ;;; it under the terms of the GNU General Public License as published by
@@ -326,7 +326,7 @@ Or ((1_word color) (2_word color) 3_word (4_word color)...)"
 					       :height height
 					       :background (get-color *info-background*)
 					       :colormap (xlib:screen-default-colormap *screen*)
-					       :border-width 1
+					       :border-width *border-size*
 					       :border (get-color *info-border*)
 					       :event-mask '(:exposure)))
 		   (gc (xlib:create-gcontext :drawable window
@@ -371,7 +371,8 @@ key is a character, a keycode or a keysym
 Separator is a string or a symbol (all but a list)
 Function can be a function or a list (function color) for colored output"
   (let ((info-list nil)
-	(action nil))
+	(action nil)
+        (old-info-keys (copy-hash-table *info-keys*)))
     (labels ((define-key (key function)
 	       (define-info-key-fun (list key)
 		   (lambda (&optional args)
@@ -393,10 +394,7 @@ Function can be a function or a list (function color) for colored output"
 		       (define-key key function)))))
 	  (t (push (list (format nil "-=- ~A -=-" item) *menu-color-comment*) info-list))))
       (let ((selected-item (info-mode (nreverse info-list) :width width :height height)))
-	(dolist (item item-list)
-	  (when (consp item)
-	    (let ((key (first item)))
-	      (undefine-info-key-fun (list key)))))
+        (setf *info-keys* old-info-keys)
 	(when selected-item
 	  (awhen (nth selected-item item-list)
 	    (when (consp it)
@@ -535,25 +533,21 @@ Pass the :no-producing-doc symbol to remove the producing doc"
 
 (defun show-config-variable ()
   "Show all configurable variables"
-  (let ((all-groups nil)
-	(result nil))
-    (with-all-internal-symbols (symbol :clfswm)
-      (when (is-config-p symbol)
-	(pushnew (config-group symbol) all-groups :test #'string-equal)))
+  (let ((result nil))
     (labels ((rec ()
 	       (setf result nil)
-	       (info-mode-menu (loop :for group :in all-groups
+	       (info-mode-menu (loop :for group :in (config-all-groups)
 				  :for i :from 0
 				  :collect (list (number->char i)
 						 (let ((group group))
 						   (lambda ()
 						     (setf result group)))
-						 group)))
+						 (config-group->string group))))
 	       (when result
 		 (info-mode (configuration-variable-colorize-line
 			     (split-string (append-newline-space
 					    (with-output-to-string (stream)
-					      (produce-configuration-variables stream result)))
+					      (produce-conf-var-doc stream result t nil)))
 					   #\Newline)))
 		 (rec))))
       (rec))))

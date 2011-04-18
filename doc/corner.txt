@@ -38,7 +38,7 @@ Here are the actions associated to screen corners in CLFSWM:
 
 
 This documentation was produced with the CLFSWM auto-doc functions.
-To reproduce it, use the produce-menu-doc-in-file or
+To reproduce it, use the produce-corner-doc-in-file or
 the produce-all-docs function from the Lisp REPL.
 
 Something like this:
