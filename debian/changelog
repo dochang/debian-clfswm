@@ -1,4 +1,4 @@
-clfswm (20110418.git050d0a2-1) UNRELEASED; urgency=low
+clfswm (20110418.git050d0a2-1) unstable; urgency=low
 
   * delete the sample comment in debian/rules
   * debian/copyright
@@ -6,7 +6,7 @@ clfswm (20110418.git050d0a2-1) UNRELEASED; urgency=low
     + add copyright information from files in contrib/
   * refresh debian/patches
 
- --
+ -- Desmond O. Chang <dochang@gmail.com>  Tue, 19 Apr 2011 08:16:35 +0800
 
 clfswm (20110305.git58f154e-1) unstable; urgency=low
 
