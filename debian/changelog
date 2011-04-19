@@ -4,6 +4,7 @@ clfswm (20110418.git050d0a2-1) UNRELEASED; urgency=low
   * debian/copyright
     + fix typo
     + add copyright information from files in contrib/
+  * refresh debian/patches
 
  --
 

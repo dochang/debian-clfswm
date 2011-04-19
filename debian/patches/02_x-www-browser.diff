@@ -1,6 +1,7 @@
+Use x-www-browser by default.
 --- a/src/clfswm-util.lisp
 +++ b/src/clfswm-util.lisp
-@@ -709,7 +709,7 @@
+@@ -705,7 +705,7 @@
  ;;;;;| Various definitions
  ;;;;;`-----
  

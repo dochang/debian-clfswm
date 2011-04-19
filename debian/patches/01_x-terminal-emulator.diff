@@ -17,7 +17,7 @@ Use x-terminal-emulator by default.
    (define-second-key ("F10" :shift :control) 'toggle-show-root-frame)
 --- a/src/clfswm-info.lisp
 +++ b/src/clfswm-info.lisp
-@@ -496,7 +496,7 @@
+@@ -494,7 +494,7 @@
        (add-key hash-second 'run-program-from-query-string *second-keys*)
        (add-key hash-second 'eval-from-query-string *second-keys*)
        (add-key hash-second 'set-open-in-new-frame-in-parent-frame-nw-hook *second-keys*)
@@ -29,12 +29,12 @@ Use x-terminal-emulator by default.
 --- a/src/config.lisp
 +++ b/src/config.lisp
 @@ -131,7 +131,7 @@
-   "Config(Corner group): The clfswm terminal name")
+   'Corner "The clfswm terminal name")
  ;;(defparameter *clfswm-terminal-cmd* (format nil "xterm -T ~A -e /bin/bash --noprofile --norc" *clfswm-terminal-name*)
  ;;(defparameter *clfswm-terminal-cmd* (format nil "urxvt -name ~A" *clfswm-terminal-name*)
--(defparameter *clfswm-terminal-cmd* (format nil "xterm -T ~A" *clfswm-terminal-name*)
-+(defparameter *clfswm-terminal-cmd* (format nil "x-terminal-emulator -T ~A" *clfswm-terminal-name*)
-   "Config(Corner group): The clfswm terminal command.
+-(defconfig *clfswm-terminal-cmd* (format nil "xterm -T ~A" *clfswm-terminal-name*)
++(defconfig *clfswm-terminal-cmd* (format nil "x-terminal-emulator -T ~A" *clfswm-terminal-name*)
+   'Corner "The clfswm terminal command.
  This command must set the window title to *clfswm-terminal-name*")
  
 --- a/contrib/reboot-halt.lisp
