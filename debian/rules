@@ -15,11 +15,11 @@ clc-files := $(clc-source)/$(pkg)
 
 override_dh_auto_configure:
 
-override_dh_installman: clfswm.1
-	dh_installman clfswm.1
+override_dh_installman: debian/clfswm.1
+	dh_installman debian/clfswm.1
 
-clfswm.1: clfswm.1.txt
-	a2x -f manpage clfswm.1.txt
+debian/clfswm.1: debian/clfswm.1.txt
+	a2x -f manpage debian/clfswm.1.txt
 
 override_dh_fixperms:
 	chmod -x debian/$(debpkg)/$(clc-files)/contrib/server/test.lisp
