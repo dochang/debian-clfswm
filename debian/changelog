@@ -5,6 +5,7 @@ clfswm (20110616.git216af7b-1) unstable; urgency=low
     + add other copyright info
   * refresh debian/patches
   * put manpage in debian/
+  * put startup script in debian/
 
  --
 

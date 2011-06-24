@@ -15,6 +15,10 @@ clc-files := $(clc-source)/$(pkg)
 
 override_dh_auto_configure:
 
+override_dh_install:
+	install -D -T debian/clfswm.sh debian/$(debpkg)/usr/bin/clfswm
+	dh_install
+
 override_dh_installman: debian/clfswm.1
 	dh_installman debian/clfswm.1
 
