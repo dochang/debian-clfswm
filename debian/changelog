@@ -2,6 +2,7 @@ clfswm (20110616.git216af7b-1) unstable; urgency=low
 
   * debian/copyright
     + fix issues
+    + add other copyright info
 
  --
 
