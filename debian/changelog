@@ -1,3 +1,9 @@
+clfswm (20110616.git216af7b-1) unstable; urgency=low
+
+  * 
+
+ --
+
 clfswm (20110418.git050d0a2-1) unstable; urgency=low
 
   * delete the sample comment in debian/rules
