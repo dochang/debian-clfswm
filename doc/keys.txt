@@ -12,10 +12,13 @@ Main mode keys:
   Mod-1                Left            Select the previous brother
   Mod-1                Down            Select the previous level in frame
   Mod-1                Up              Select the next level in frame
+  Mod-1 Control        Left            Select spatially the nearest brother of the current child in the left direction
+  Mod-1 Control        Right           Select spatially the nearest brother of the current child in the right direction
+  Mod-1 Control        Up              Select spatially the nearest brother of the current child in the up direction
+  Mod-1 Control        Down            Select spatially the nearest brother of the current child in the down direction
   Mod-1                Tab             Select the next child
   Mod-1 Shift          Tab             Select the previous child
   Mod-1 Control        Tab             Select the next subchild
-  Shift                Tab             Store the current child and switch to the previous one
   Mod-1                Return          Enter in the selected frame - ie make it the root frame
   Mod-1 Shift          Return          Leave the selected frame - ie make its parent the root frame
   Mod-5                Return          Maximize/Unmaximize the current frame in its parent frame
@@ -58,6 +61,8 @@ Or do actions on corners
 Or do actions on corners
   Mod-1                1               Move and focus the current child - Create a new frame on the root window
   Mod-1                3               Resize and focus the current child - Create a new frame on the root window
+  Mod-1 Shift          1               Move (constrained by other frames) and focus the current child - Create a new frame on the root window
+  Mod-1 Shift          3               Resize (constrained by other frames) and focus the current child - Create a new frame on the root window
   Mod-1 Control        1               Move the child under the mouse cursor to another frame
                        4               Select the next level in frame
                        5               Select the previous level in frame
@@ -79,18 +84,25 @@ Second mode keys:
                        P               Open the frame pack menu
                        L               Open the frame fill menu
                        R               Open the frame resize menu
+                       X               Update layout managed children position
+  Control              G               Stop all pending actions
+                       Q               Close focus window: Delete the focus window in all frames and workspaces
+                       K               Close or kill the current window (ask before doing anything)
                        I               Identify a key
                        Colon           Eval a lisp form from the query input
                        Exclam          Run a program from the query input
                        Return          Leave second mode
                        Escape          Leave second mode
-  Control              G               Leave second mode
                        T               Tile the current frame
   Mod-1 Control Shift  Home            Exit clfswm
   Mod-1                Right           Select the next brother
   Mod-1                Left            Select the previous brother
   Mod-1                Down            Select the previous level in frame
   Mod-1                Up              Select the next level in frame
+  Mod-1 Control        Left            Select spatially the nearest brother of the current child in the left direction
+  Mod-1 Control        Right           Select spatially the nearest brother of the current child in the right direction
+  Mod-1 Control        Up              Select spatially the nearest brother of the current child in the up direction
+  Mod-1 Control        Down            Select spatially the nearest brother of the current child in the down direction
                        Right           Speed move mouse to right
                        Left            Speed move mouse to left
                        Down            Speed move mouse to down
@@ -101,7 +113,7 @@ Second mode keys:
   Mod-1                Tab             Select the next child
   Mod-1 Shift          Tab             Select the previous child
   Mod-1 Control        Tab             Select the next subchild
-  Shift                Tab             Store the current child and switch to the previous one
+                       Tab             Store the current child and switch to the previous one
   Mod-1                Return          Enter in the selected frame - ie make it the root frame
   Mod-1 Shift          Return          Leave the selected frame - ie make its parent the root frame
   Mod-5                Return          Maximize/Unmaximize the current frame in its parent frame
@@ -114,6 +126,11 @@ Second mode keys:
                        O               Open the next window in a new frame in the parent frame
   Control              O               Open the next window in a new frame in the root frame
                        A               Add a default frame in the current frame
+  Control              A               Add a frame in the parent frame (and reorganize parent frame)
+                       Plus            Increase the tile layout size
+                       Minus           Decrease the tile layout size
+  Control              Plus            Increase slowly the tile layout size
+  Control              Minus           Decrease slowly the tile layout size
   Control              Escape          Close or kill the current window (ask before doing anything)
   Control              X               Cut the current child to the selection
   Mod-1 Control        X               Clear the current selection
@@ -154,6 +171,8 @@ Or do corners actions
 Or do corners actions
   Mod-1                1               Move and focus the current child - Create a new frame on the root window
   Mod-1                3               Resize and focus the current child - Create a new frame on the root window
+  Mod-1 Shift          1               Move (constrained by other frames) and focus the current child - Create a new frame on the root window
+  Mod-1 Shift          3               Resize (constrained by other frames) and focus the current child - Create a new frame on the root window
   Mod-1 Control        1               Move the child under the mouse cursor to another frame
                        4               Select the next level in frame
                        5               Select the previous level in frame
@@ -235,6 +254,42 @@ Expose windows mode keys:
                        X               Select child 'x' (23)
                        Y               Select child 'y' (24)
                        Z               Select child 'z' (25)
+                       0               Select child '0' (26)
+                       1               Select child '1' (27)
+                       2               Select child '2' (28)
+                       3               Select child '3' (29)
+                       4               Select child '4' (30)
+                       5               Select child '5' (31)
+                       6               Select child '6' (32)
+                       7               Select child '7' (33)
+                       8               Select child '8' (34)
+                       9               Select child '9' (35)
+                       A               Select child 'A' (36)
+                       B               Select child 'B' (37)
+                       C               Select child 'C' (38)
+                       D               Select child 'D' (39)
+                       E               Select child 'E' (40)
+                       F               Select child 'F' (41)
+                       G               Select child 'G' (42)
+                       H               Select child 'H' (43)
+                       I               Select child 'I' (44)
+                       J               Select child 'J' (45)
+                       K               Select child 'K' (46)
+                       L               Select child 'L' (47)
+                       M               Select child 'M' (48)
+                       N               Select child 'N' (49)
+                       O               Select child 'O' (50)
+                       P               Select child 'P' (51)
+                       Q               Select child 'Q' (52)
+                       R               Select child 'R' (53)
+                       S               Select child 'S' (54)
+                       T               Select child 'T' (55)
+                       U               Select child 'U' (56)
+                       V               Select child 'V' (57)
+                       W               Select child 'W' (58)
+                       X               Select child 'X' (59)
+                       Y               Select child 'Y' (60)
+                       Z               Select child 'Z' (61)
                        Escape          Leave the expose mode
   Control              G               Leave the expose mode
   Mod-1                Escape          Leave the expose mode

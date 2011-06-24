@@ -23,6 +23,12 @@
 ;;;
 ;;; --------------------------------------------------------------------------
 
+;;;;;; Uncomment lines above to save the default documentation.
+;;(pushnew :BUILD-DOC *features*)
+
+
+;;(load (compile-file "metering.cl"))
+
 (defparameter *base-dir* (directory-namestring *load-truename*))
 (export '*base-dir*)
 
@@ -57,14 +63,15 @@
 
 (in-package :clfswm)
 
+#-:BUILD-DOC
 (ignore-errors
- (main :read-conf-file-p t))
+  (main :read-conf-file-p t))
 
 
-;;;;;; Uncomment lines above to save the default documentation.
-;;(ignore-errors
-;;  (main :read-conf-file-p nil))
-;;(produce-all-docs)
+#+:BUILD-DOC
+(ignore-errors
+  (main :read-conf-file-p nil)
+  (produce-all-docs))
 
 
 ;;; For debuging: start another sever (for example: 'startx -- :1'), Xnest

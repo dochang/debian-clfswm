@@ -54,6 +54,7 @@
 	   :dbg
 	   :dbgnl
 	   :dbgc
+           :distance
 	   :with-all-internal-symbols
 	   :export-all-functions :export-all-variables
 	   :export-all-functions-and-variables
@@ -63,6 +64,7 @@
 	   :setf/=
 	   :create-symbol
 	   :number->char
+           :number->string
 	   :simple-type-of
 	   :repeat-chars
 	   :nth-insert
@@ -101,6 +103,7 @@
 	   :exchange-one-in-list
 	   :rotate-list
 	   :anti-rotate-list
+           :n-rotate-list
 	   :append-formated-list
 	   :shuffle-list
 	   :parse-integer-in-list
@@ -360,6 +363,9 @@ Return the result of the last hook"
   (force-output))
 
 
+(defun distance (x1 y1 x2 y2)
+  (+ (abs (- x2 x1)) (abs (- y2 y1))))
+
 
 ;;; Symbols tools
 (defmacro with-all-internal-symbols ((var package) &body body)
@@ -438,10 +444,17 @@ Return the result of the last hook"
   "Return a new symbol from names"
   (intern (string-upcase (apply #'concatenate 'string names))))
 
+
 (defun number->char (number)
-  (if (< number 26)
-      (code-char (+ (char-code #\a) number))
-      #\|))
+  (cond ((<= number 25) (code-char (+ (char-code #\a) number)))
+        ((<= 26 number 35) (code-char (+ (char-code #\0) (- number 26))))
+        ((<= 36 number 61) (code-char (+ (char-code #\A) (- number 36))))
+        (t #\|)))
+
+(defun number->string (number)
+  (string (number->char number)))
+
+
 
 (defun simple-type-of (object)
   (let ((type (type-of object)))
@@ -860,6 +873,11 @@ Useful for re-using the &REST arg after removing some options."
 (defun anti-rotate-list (list)
   (when list
     (append (last list) (butlast list))))
+
+(defun n-rotate-list (list n)
+  (if (> n 0)
+      (n-rotate-list (rotate-list list) (1- n))
+      list))
 
 
 (defun append-formated-list (base-str

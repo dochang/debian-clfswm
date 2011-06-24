@@ -72,7 +72,6 @@
 
 
 
-
 (defun rename-current-child ()
   "Rename the current child"
   (let ((name (query-string (format nil "New child name: (last: ~A)" (child-name *current-child*))
@@ -99,6 +98,20 @@
       (push (create-frame :name name) (frame-child *current-child*))))
   (leave-second-mode))
 
+(defun add-frame-in-parent-frame ()
+  "Add a frame in the parent frame (and reorganize parent frame)"
+  (let ((new-frame (create-frame))
+	(parent (find-parent-frame *current-child*)))
+    (when parent
+      (pushnew new-frame (frame-child parent))
+      (setf *current-root* parent
+	    *current-child* parent)
+      (set-layout-once #'tile-space-layout)
+      (setf *current-child* new-frame)
+      (leave-second-mode))))
+
+
+
 
 (defun add-placed-frame ()
   "Add a placed frame in the current frame"
@@ -115,13 +128,10 @@
 
 
 (defun delete-focus-window-generic (close-fun)
-  (let ((window (xlib:input-focus *display*)))
-    (when (and window (not (xlib:window-equal window *no-focus-window*)))
-      (when (child-equal-p window *current-child*)
-	(setf *current-child* *current-root*))
-      (hide-child window)
-      (delete-child-and-children-in-all-frames window close-fun)
-      (show-all-children))))
+  (with-focus-window (window)
+    (when (child-equal-p window *current-child*)
+      (setf *current-child* *current-root*))
+    (delete-child-and-children-in-all-frames window close-fun)))
 
 (defun delete-focus-window ()
   "Close focus window: Delete the focus window in all frames and workspaces"
@@ -133,12 +143,11 @@
 
 (defun remove-focus-window ()
   "Remove the focus window from the current frame"
-  (let ((window (xlib:input-focus *display*)))
-    (when (and window (not (xlib:window-equal window *no-focus-window*)))
-      (setf *current-child* *current-root*)
-      (hide-child window)
-      (remove-child-in-frame window (find-parent-frame window))
-      (show-all-children))))
+  (with-focus-window (window)
+    (setf *current-child* *current-root*)
+    (hide-child window)
+    (remove-child-in-frame window (find-parent-frame window))
+    (show-all-children)))
 
 
 (defun unhide-all-windows-in-current-child ()
@@ -217,21 +226,29 @@
   (display-frame-info *current-root*))
 
 
-(defun cut-current-child ()
+(defun cut-current-child (&optional (show-now t))
   "Cut the current child to the selection"
-  (hide-all *current-child*)
-  (copy-current-child)
-  (remove-child-in-frame *current-child* (find-parent-frame *current-child* *current-root*))
-  (setf *current-child* *current-root*)
-  (show-all-children t))
+  (unless (child-equal-p *current-child* *current-root*)
+    (let ((parent (find-parent-frame *current-child*)))
+      (hide-all *current-child*)
+      (copy-current-child)
+      (remove-child-in-frame *current-child* (find-parent-frame *current-child* *current-root*))
+      (when parent
+        (setf *current-child* parent))
+      (when show-now
+        (show-all-children t))
+      *current-child*)))
 
 (defun remove-current-child ()
   "Remove the current child from its parent frame"
-  (hide-all *current-child*)
-  (remove-child-in-frame *current-child* (find-parent-frame *current-child* *current-root*))
-  (setf *current-child* *current-root*)
-  (show-all-children t)
-  (leave-second-mode))
+  (unless (child-equal-p *current-child* *current-root*)
+    (let ((parent (find-parent-frame *current-child*)))
+      (hide-all *current-child*)
+      (remove-child-in-frame *current-child* (find-parent-frame *current-child* *current-root*))
+      (when parent
+        (setf *current-child* parent))
+      (show-all-children t)
+      (leave-second-mode))))
 
 (defun delete-current-child ()
   "Delete the current child and its children in all frames"
@@ -243,20 +260,35 @@
 
 (defun paste-selection-no-clear ()
   "Paste the selection in the current frame - Do not clear the selection after paste"
-  (let ((frame-dest (typecase *current-child*
-		      (xlib:window (find-parent-frame *current-child* *current-root*))
-		      (frame *current-child*))))
-    (when frame-dest
-      (dolist (child *child-selection*)
-	(unless (find-child-in-parent child frame-dest)
-	  (pushnew child (frame-child frame-dest))))
-      (show-all-children))))
+  (when (frame-p *current-child*)
+    (dolist (child *child-selection*)
+      (unless (find-child-in-parent child *current-child*)
+        (pushnew child (frame-child *current-child*) :test #'child-equal-p)))
+    (show-all-children)))
 
 (defun paste-selection ()
   "Paste the selection in the current frame"
-  (paste-selection-no-clear)
-  (setf *child-selection* nil)
-  (display-frame-info *current-root*))
+  (when (frame-p *current-child*)
+    (paste-selection-no-clear)
+    (setf *child-selection* nil)
+    (display-frame-info *current-root*)))
+
+
+(defun copy-focus-window ()
+  "Copy the focus window to the selection"
+  (with-focus-window (window)
+    (let ((*current-child* window))
+      (copy-current-child))))
+
+
+(defun cut-focus-window ()
+  "Cut the focus window to the selection"
+  (with-focus-window (window)
+    (setf *current-child* (let ((*current-child* window))
+                            (cut-current-child nil)))
+    (show-all-children t)))
+
+
 
 
 
@@ -551,33 +583,29 @@
 
 
 
-(defun mouse-click-to-focus-generic (window root-x root-y mouse-fn)
+(defun mouse-click-to-focus-generic (root-x root-y mouse-fn)
   "Focus the current frame or focus the current window parent
 mouse-fun is #'move-frame or #'resize-frame"
   (let* ((to-replay t)
 	 (child (find-child-under-mouse root-x root-y))
 	 (parent (find-parent-frame child))
-	 (root-p (or (child-equal-p window *root*)
-		     (and (frame-p *current-root*)
-			  (child-equal-p child (frame-window *current-root*))))))
+         (root-p (child-equal-p child *current-root*)))
     (labels ((add-new-frame ()
-	       (setf child (create-frame)
-		     parent *current-root*
-		     mouse-fn #'resize-frame)
-	       (place-frame child parent root-x root-y 10 10)
-	       (map-window (frame-window child))
-	       (pushnew child (frame-child *current-root*))))
+               (when (frame-p child)
+                 (setf child (create-frame)
+                       parent *current-root*
+                       mouse-fn #'resize-frame
+                       *current-child* child)
+                 (place-frame child parent root-x root-y 10 10)
+                 (map-window (frame-window child))
+                 (pushnew child (frame-child *current-root*)))))
       (when (or (not root-p) *create-frame-on-root*)
-	(unless parent
-	  (if root-p
-	      (add-new-frame)
-	      (progn
-		(unless (equal (type-of child) 'frame)
-		  (setf child (find-frame-window child *current-root*)))
-		(setf parent (find-parent-frame child)))))
-	(when (and (frame-p child) (not (child-equal-p child *current-root*)))
+        (when root-p
+          (add-new-frame))
+        (when (and (frame-p child) (not (child-equal-p child *current-root*)))
 	  (funcall mouse-fn child parent root-x root-y))
 	(when (and child parent
+                   (not root-p)
 		   (focus-all-children child parent
 				       (not (and (child-equal-p *current-child* *current-root*)
 						 (xlib:window-p *current-root*)))))
@@ -591,14 +619,16 @@ mouse-fun is #'move-frame or #'resize-frame"
 (defun mouse-click-to-focus-and-move (window root-x root-y)
   "Move and focus the current frame or focus the current window parent.
 Or do actions on corners"
+  (declare (ignore window))
   (or (do-corner-action root-x root-y *corner-main-mode-left-button*)
-      (mouse-click-to-focus-generic window root-x root-y #'move-frame)))
+      (mouse-click-to-focus-generic root-x root-y #'move-frame)))
 
 (defun mouse-click-to-focus-and-resize (window root-x root-y)
   "Resize and focus the current frame or focus the current window parent.
 Or do actions on corners"
+  (declare (ignore window))
   (or (do-corner-action root-x root-y *corner-main-mode-right-button*)
-      (mouse-click-to-focus-generic window root-x root-y #'resize-frame)))
+      (mouse-click-to-focus-generic root-x root-y #'resize-frame)))
 
 (defun mouse-middle-click (window root-x root-y)
   "Do actions on corners"
@@ -1302,16 +1332,19 @@ For window: set current child to window or its parent according to window-parent
 
 (defun ask-close/kill-current-window ()
   "Close or kill the current window (ask before doing anything)"
-  (let ((window (xlib:input-focus *display*)))
+  (let ((window (xlib:input-focus *display*))
+        (*info-mode-placement* *ask-close/kill-placement*))
     (info-mode-menu
      (if (and window (not (xlib:window-equal window *no-focus-window*)))
 	 `(,(format nil "Focus window: ~A" (xlib:wm-name window))
-	    (#\c delete-focus-window "Close the focus window")
+	    (#\s delete-focus-window "Close the focus window")
 	    (#\k destroy-focus-window "Kill the focus window")
-	    (#\r remove-focus-window)
-	    (#\u unhide-all-windows-in-current-child))
+            (#\x cut-focus-window)
+            (#\c copy-focus-window)
+            (#\v paste-selection))
 	 `(,(format nil "Focus window: None")
-	    (#\u unhide-all-windows-in-current-child))))))
+            (#\v paste-selection))))
+    t))
 
 
 
@@ -1564,5 +1597,4 @@ For window: set current child to window or its parent according to window-parent
 	  (focus-all-children window parent)
           (show-all-children t))
         (funcall run-fn))))
-
 

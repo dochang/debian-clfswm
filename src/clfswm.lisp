@@ -94,6 +94,8 @@
   (unless (and (not send-event-p)
 	       (not (xlib:window-equal window event-window)))
     (when (find-child window *root-frame*)
+      (clean-windows-in-all-frames)
+      (show-all-children)
       (delete-child-in-all-frames window)
       (show-all-children))))
 
@@ -102,6 +104,8 @@
   (unless (or send-event-p
 	      (xlib:window-equal window event-window))
     (when (find-child window *root-frame*)
+      (clean-windows-in-all-frames)
+      (show-all-children)
       (delete-child-in-all-frames window)
       (show-all-children))))
 
@@ -169,7 +173,8 @@
 (defun default-init-hook ()
   (let ((frame (add-frame (create-frame :name "Default"
                                         :layout nil :x 0.05 :y 0.05
-                                        :w 0.9 :h 0.9) *root-frame*)))
+                                        :w 0.9 :h 0.9)
+                          *root-frame*)))
     (setf *current-child* frame)))
 
 
@@ -205,13 +210,14 @@
   (xlib:display-force-output *display*)
   (setf *child-selection* nil)
   (setf *root-frame* (create-frame :name "Root" :number 0)
-	*current-root* *root-frame*
+        *current-root* *root-frame*
 	*current-child* *current-root*)
   (call-hook *init-hook*)
   (process-existing-windows *screen*)
   (show-all-children)
   (grab-main-keys)
   (xlib:display-finish-output *display*))
+
 
 
 
@@ -276,6 +282,7 @@
 	(ungrab-main-keys)
 	(xlib:destroy-window *no-focus-window*)
 	(xlib:free-pixmap *pixmap-buffer*)
+        (destroy-all-frames-window)
 	(call-hook *close-hook*)
 	(xlib:close-display *display*)
 	#+:event-debug

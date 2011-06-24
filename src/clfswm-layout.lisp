@@ -92,9 +92,32 @@
 (defun layout-ask-size (msg slot &optional (min 80))
   (when (frame-p *current-child*)
     (let ((new-size (/ (or (query-number msg (* (frame-data-slot *current-child* slot) 100)) min) 100)))
-      (when (<= 0 new-size 1)
-	(setf (frame-data-slot *current-child* slot) new-size)))))
+      (setf (frame-data-slot *current-child* slot) (max (min new-size 0.99) 0.01)))))
 
+(defun adjust-layout-size (slot inc)
+  (when (frame-p *current-child*)
+    (setf (frame-data-slot *current-child* slot)
+          (max (min (+ (frame-data-slot *current-child* slot) inc) 0.99) 0.01))))
+
+(defun inc-tile-layout-size ()
+  "Increase the tile layout size"
+  (adjust-layout-size :tile-size 0.05)
+  (show-all-children))
+
+(defun dec-tile-layout-size ()
+  "Decrease the tile layout size"
+  (adjust-layout-size :tile-size -0.05)
+  (show-all-children))
+
+(defun inc-slow-tile-layout-size ()
+  "Increase slowly the tile layout size"
+  (adjust-layout-size :tile-size 0.01)
+  (show-all-children))
+
+(defun dec-slow-tile-layout-size ()
+  "Decrease slowly the tile layout size"
+  (adjust-layout-size :tile-size -0.01)
+  (show-all-children))
 
 
 
@@ -126,43 +149,10 @@
 			  '(("s" fast-layout-switch)
 			    ("p" push-in-fast-layout-list)))
 
-(declaim (inline adj-border-xy adj-border-wh))
-(defgeneric adj-border-xy (value child))
-(defgeneric adj-border-wh (value child))
-
-(defmethod adj-border-xy (v (child xlib:window))
-  (+ v (xlib:drawable-border-width child)))
-
-(defmethod adj-border-xy (v (child frame))
-  (+ v (xlib:drawable-border-width (frame-window child))))
-
-(defmethod adj-border-wh (v (child xlib:window))
-  (- v (* (xlib:drawable-border-width child) 2)))
-
-(defmethod adj-border-wh (v (child frame))
-  (- v (* (xlib:drawable-border-width (frame-window child)) 2)))
-
-
-(declaim (inline anti-adj-border-xy anti-adj-border-wh))
-(defgeneric anti-adj-border-xy (value child))
-(defgeneric anti-adj-border-wh (value child))
-
-(defmethod anti-adj-border-xy (v (child xlib:window))
-  (- v (xlib:drawable-border-width child)))
-
-(defmethod anti-adj-border-xy (v (child frame))
-  (- v (xlib:drawable-border-width (frame-window child))))
-
-(defmethod anti-adj-border-wh (v (child xlib:window))
-  (+ v (* (xlib:drawable-border-width child) 2)))
-
-(defmethod anti-adj-border-wh (v (child frame))
-  (+ v (* (xlib:drawable-border-width (frame-window child)) 2)))
-
 
 ;;; No layout
 (defgeneric no-layout (child parent)
-  (:documentation "No layout: Maximize windows in there frame - Leave frames to there original size"))
+  (:documentation "No layout: Maximize windows in their frame - Leave frames to their original size"))
 
 (defmethod no-layout ((child xlib:window) parent)
   (with-slots (rx ry rw rh) parent
@@ -180,14 +170,14 @@
 
 
 (defun set-no-layout ()
-  "No layout: Maximize windows in there frame - Leave frames to there original size"
+  "No layout: Maximize windows in their frame - Leave frames to their original size"
   (set-layout #'no-layout))
 
 (register-layout 'set-no-layout)
 
 ;;; No layout remember size
 (defun set-no-layout-remember-size ()
-  "No layout: Maximize windows in there frame - Leave frames to there actual size"
+  "No layout: Maximize windows in their frame - Leave frames to their actual size"
   (fixe-real-size-current-child)
   (set-no-layout))
 
@@ -197,7 +187,7 @@
 
 ;;; Maximize layout
 (defgeneric maximize-layout (child parent)
-  (:documentation "Maximize layout: Maximize windows and frames in there parent frame"))
+  (:documentation "Maximize layout: Maximize windows and frames in their parent frame"))
 
 (defmethod maximize-layout (child parent)
   (with-slots (rx ry rw rh) parent
@@ -208,7 +198,7 @@
 
 
 (defun set-maximize-layout ()
-  "Maximize layout: Maximize windows and frames in there parent frame"
+  "Maximize layout: Maximize windows and frames in their parent frame"
   (set-layout #'maximize-layout))
 
 (register-layout 'set-maximize-layout)
@@ -220,15 +210,27 @@
 (defun tile-layout-ask-keep-position ()
   (when (frame-p *current-child*)
     (if (query-yes-or-no "Keep frame children positions?")
-	(setf (frame-data-slot *current-child* :tile-layout-keep-positiion) :yes)
-	(remove-frame-data-slot *current-child* :tile-layout-keep-positiion))))
+	(setf (frame-data-slot *current-child* :tile-layout-keep-position) :yes)
+	(remove-frame-data-slot *current-child* :tile-layout-keep-position))))
 
 
-(defun set-layout-managed-children ()
-  (when (frame-p *current-child*)
-    (setf (frame-data-slot *current-child* :layout-managed-children)
-	  (copy-list (get-managed-child *current-child*)))
-    (tile-layout-ask-keep-position)))
+
+(labels ((set-managed ()
+           (setf (frame-data-slot *current-child* :layout-managed-children)
+                 (copy-list (get-managed-child *current-child*)))))
+  (defun set-layout-managed-children ()
+    (when (frame-p *current-child*)
+      (set-managed)
+      (tile-layout-ask-keep-position)))
+
+
+  (defun update-layout-managed-children-position ()
+    "Update layout managed children position"
+    (when (frame-p *current-child*)
+      (set-managed)
+      (leave-second-mode))))
+
+
 
 (defun update-layout-managed-children-keep-position (child parent)
   (let ((managed-children (frame-data-slot parent :layout-managed-children))
@@ -243,7 +245,7 @@
     managed-children))
 
 (defun update-layout-managed-children (child parent)
-  (if (eql (frame-data-slot *current-child* :tile-layout-keep-positiion) :yes)
+  (if (eql (frame-data-slot parent :tile-layout-keep-position) :yes)
       (update-layout-managed-children-keep-position child parent)
       (get-managed-child parent)))
 
@@ -392,7 +394,7 @@
 (defun tile-left-layout (child parent)
   "Tile Left: main child on left and others on right"
   (with-slots (rx ry rw rh) parent
-    (let* ((managed-children (get-managed-child parent))
+    (let* ((managed-children (update-layout-managed-children child parent))
 	   (pos (child-position child managed-children))
 	   (len (max (1- (length managed-children)) 1))
 	   (dy (/ rh len))
@@ -413,6 +415,7 @@
 (defun set-tile-left-layout ()
   "Tile Left: main child on left and others on right"
   (layout-ask-size "Tile size in percent (%)" :tile-size)
+  (set-layout-managed-children)
   (set-layout #'tile-left-layout))
 
 
@@ -421,7 +424,7 @@
 (defun tile-right-layout (child parent)
   "Tile Right: main child on right and others on left"
   (with-slots (rx ry rw rh) parent
-    (let* ((managed-children (get-managed-child parent))
+    (let* ((managed-children (update-layout-managed-children child parent))
 	   (pos (child-position child managed-children))
 	   (len (max (1- (length managed-children)) 1))
 	   (dy (/ rh len))
@@ -442,6 +445,7 @@
 (defun set-tile-right-layout ()
   "Tile Right: main child on right and others on left"
   (layout-ask-size "Tile size in percent (%)" :tile-size)
+  (set-layout-managed-children)
   (set-layout #'tile-right-layout))
 
 
@@ -453,7 +457,7 @@
 (defun tile-top-layout (child parent)
   "Tile Top: main child on top and others on bottom"
   (with-slots (rx ry rw rh) parent
-    (let* ((managed-children (get-managed-child parent))
+    (let* ((managed-children (update-layout-managed-children child parent))
 	   (pos (child-position child managed-children))
 	   (len (max (1- (length managed-children)) 1))
 	   (dx (/ rw len))
@@ -474,6 +478,7 @@
 (defun set-tile-top-layout ()
   "Tile Top: main child on top and others on bottom"
   (layout-ask-size "Tile size in percent (%)" :tile-size)
+  (set-layout-managed-children)
   (set-layout #'tile-top-layout))
 
 
@@ -483,7 +488,7 @@
 (defun tile-bottom-layout (child parent)
   "Tile Bottom: main child on bottom and others on top"
   (with-slots (rx ry rw rh) parent
-    (let* ((managed-children (get-managed-child parent))
+    (let* ((managed-children (update-layout-managed-children child parent))
 	   (pos (child-position child managed-children))
 	   (len (max (1- (length managed-children)) 1))
 	   (dx (/ rw len))
@@ -505,6 +510,7 @@
 (defun set-tile-bottom-layout ()
   "Tile Bottom: main child on bottom and others on top"
   (layout-ask-size "Tile size in percent (%)" :tile-size)
+  (set-layout-managed-children)
   (set-layout #'tile-bottom-layout))
 
 
@@ -529,7 +535,7 @@
 (defun tile-left-space-layout (child parent)
   "Tile Left Space: main child on left and others on right. Leave some space (in pixels) on the left."
   (with-slots (rx ry rw rh) parent
-    (let* ((managed-children (get-managed-child parent))
+    (let* ((managed-children (update-layout-managed-children child parent))
 	   (pos (child-position child managed-children))
 	   (len (max (1- (length managed-children)) 1))
 	   (dy (/ rh len))
@@ -557,6 +563,7 @@
   "Tile Left Space: main child on left and others on right. Leave some space on the left."
   (layout-ask-size "Tile size in percent (%)" :tile-size)
   (layout-ask-space "Tile space (in pixels)" :tile-left-space)
+  (set-layout-managed-children)
   (set-layout #'tile-left-space-layout))
 
 (register-layout-sub-menu 'frame-tile-space-layout-menu "Tile with some space on one side menu"
@@ -756,7 +763,7 @@ Or do actions on corners - Skip windows in main window list"
     (if (and (frame-p *current-child*)
 	     (child-member window (frame-data-slot *current-child* :main-window-list)))
 	(replay-button-event)
-	(mouse-click-to-focus-generic window root-x root-y #'move-frame))))
+	(mouse-click-to-focus-generic root-x root-y #'move-frame))))
 
 
 

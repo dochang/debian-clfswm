@@ -108,6 +108,8 @@ It is particulary useful with CLISP/MIT-CLX.")
 (defconfig *default-focus-policy* :click nil
            "Default mouse focus policy. One of :click, :sloppy, :sloppy-strict or :sloppy-select.")
 
+(defstruct child-rect child parent selected-p x y w h)
+
 
 (defclass frame ()
   ((name :initarg :name :accessor frame-name :initform nil)
@@ -224,6 +226,8 @@ loading configuration file and before opening the display.")
   'Placement "Expose mode window placement (Selection keys position)")
 (defconfig *notify-window-placement* 'bottom-right-placement
   'Placement "Notify window placement")
+(defconfig *ask-close/kill-placement* 'top-right-placement
+  'Placement "Ask close/kill window placement")
 
 
 

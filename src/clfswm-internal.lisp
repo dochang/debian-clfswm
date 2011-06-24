@@ -1,4 +1,4 @@
-;;; --------------------------------------------------------------------------
+;; --------------------------------------------------------------------------
 ;;; CLFSWM - FullScreen Window Manager
 ;;;
 ;;; --------------------------------------------------------------------------
@@ -61,6 +61,15 @@
 (defun h-px->fl (h parent)
   "Convert pixel Height coordinate to float"
   (/ h (frame-rh parent)))
+
+
+
+(defun rect-hidden-p (rect1 rect2)
+  "Return T if child-rect1 hide child-rect2"
+  (and (<= (child-rect-x rect1) (child-rect-x rect2))
+       (<= (child-rect-y rect1) (child-rect-y rect2))
+       (>= (+ (child-rect-x rect1) (child-rect-w rect1)) (+ (child-rect-x rect2) (child-rect-w rect2)))
+       (>= (+ (child-rect-y rect1) (child-rect-h rect1)) (+ (child-rect-y rect2) (child-rect-h rect2)))))
 
 
 
@@ -252,8 +261,83 @@
 (defmethod child-height ((child frame))
   (frame-rh child))
 
+(defgeneric child-x2 (child))
+(defmethod child-x2 ((child xlib:window))
+  (+ (xlib:drawable-x child) (xlib:drawable-width child)))
+(defmethod child-x2 ((child frame))
+  (+ (frame-rx child) (frame-rw child)))
+
+(defgeneric child-y2 (child))
+(defmethod child-y2 ((child xlib:window))
+  (+ (xlib:drawable-y child) (xlib:drawable-height child)))
+(defmethod child-y2 ((child frame))
+  (+ (frame-ry child) (frame-rh child)))
 
 
+
+(defgeneric child-center (child))
+
+(defmethod child-center ((child xlib:window))
+  (values (+ (xlib:drawable-x child) (/ (xlib:drawable-width child) 2))
+          (+ (xlib:drawable-y child) (/ (xlib:drawable-height child) 2))))
+
+(defmethod child-center ((child frame))
+  (values (+ (frame-rx child) (/ (frame-rw child) 2))
+          (+ (frame-ry child) (/ (frame-rh child) 2))))
+
+(defun child-distance (child1 child2)
+  (multiple-value-bind (x1 y1) (child-center child1)
+    (multiple-value-bind (x2 y2) (child-center child2)
+      (values (+ (abs (- x2 x1)) (abs (- y2 y1)))
+              (- x2 x1)
+              (- y2 y1)))))
+
+(defun middle-child-x (child)
+  (+ (child-x child) (/ (child-width child) 2)))
+
+(defun middle-child-y (child)
+  (+ (child-y child) (/ (child-height child) 2)))
+
+(declaim (inline adj-border-xy adj-border-wh))
+(defgeneric adj-border-xy (value child))
+(defgeneric adj-border-wh (value child))
+
+(defmethod adj-border-xy (v (child xlib:window))
+  (+ v (xlib:drawable-border-width child)))
+
+(defmethod adj-border-xy (v (child frame))
+  (+ v (xlib:drawable-border-width (frame-window child))))
+
+(defmethod adj-border-wh (v (child xlib:window))
+  (- v (* (xlib:drawable-border-width child) 2)))
+
+(defmethod adj-border-wh (v (child frame))
+  (- v (* (xlib:drawable-border-width (frame-window child)) 2)))
+
+
+(declaim (inline anti-adj-border-xy anti-adj-border-wh))
+(defgeneric anti-adj-border-xy (value child))
+(defgeneric anti-adj-border-wh (value child))
+
+(defmethod anti-adj-border-xy (v (child xlib:window))
+  (- v (xlib:drawable-border-width child)))
+
+(defmethod anti-adj-border-xy (v (child frame))
+  (- v (xlib:drawable-border-width (frame-window child))))
+
+(defmethod anti-adj-border-wh (v (child xlib:window))
+  (+ v (* (xlib:drawable-border-width child) 2)))
+
+(defmethod anti-adj-border-wh (v (child frame))
+  (+ v (* (xlib:drawable-border-width (frame-window child)) 2)))
+
+
+
+
+(defmacro with-focus-window ((window) &body body)
+  `(let ((,window (xlib:input-focus *display*)))
+     (when (and ,window (not (xlib:window-equal ,window *no-focus-window*)))
+       ,@body)))
 
 
 (defgeneric rename-child (child name))
@@ -299,6 +383,9 @@
 		    (dolist (,sub-child (frame-child ,child))
 		      (,rec ,sub-child)))))
 	 (,rec ,root)))))
+
+
+
 
 
 ;; (with-all-frames (*root-frame* frame) (print (frame-number frame)))
@@ -356,6 +443,52 @@
 
 
 
+(defun create-frame-window ()
+  (xlib:create-window :parent *root*
+                      :x 0
+                      :y 0
+                      :width 200
+                      :height 200
+                      :background (get-color *frame-background*)
+                      :colormap (xlib:screen-default-colormap *screen*)
+                      :border-width *border-size*
+                      :border (get-color *color-selected*)
+                      :event-mask '(:exposure :button-press :button-release :pointer-motion :enter-window)))
+
+(defun create-frame-gc (window)
+  (xlib:create-gcontext :drawable window
+                        :foreground (get-color *frame-foreground*)
+                        :background (get-color *frame-background*)
+                        :font *default-font*
+                        :line-style :solid))
+
+
+(defun destroy-all-frames-window ()
+  (with-all-frames (*root-frame* frame)
+    (when (frame-gc frame)
+      (xlib:free-gcontext (frame-gc frame))
+      (setf (frame-gc frame) nil))
+    (when (frame-window frame)
+      (xlib:destroy-window (frame-window frame))
+      (setf (frame-window frame) nil))))
+
+(defun create-all-frames-window ()
+  (with-all-frames (*root-frame* frame)
+    (unless (frame-window frame)
+      (setf (frame-window frame) (create-frame-window)))
+    (unless (frame-gc frame)
+      (setf (frame-gc frame) (create-frame-gc (frame-window frame)))))
+  (with-all-frames (*root-frame* frame)
+    (dolist (child (frame-child frame))
+      (handler-case
+          (dbg (child-fullname child))
+        (error (c)
+          (setf (frame-child frame) (remove child (frame-child frame) :test #'child-equal-p))
+          (dbg c child))))))
+
+
+
+
 (defun frame-find-free-number ()
   (let ((all-numbers nil))
     (with-all-frames (*root-frame* frame)
@@ -364,21 +497,8 @@
 
 
 (defun create-frame (&rest args &key (number (frame-find-free-number)) &allow-other-keys)
-  (let* ((window (xlib:create-window :parent *root*
-				     :x 0
-				     :y 0
-				     :width 200
-				     :height 200
-				     :background (get-color *frame-background*)
-				     :colormap (xlib:screen-default-colormap *screen*)
-				     :border-width *border-size*
-				     :border (get-color *color-selected*)
-				     :event-mask '(:exposure :button-press :button-release :pointer-motion :enter-window)))
-	 (gc (xlib:create-gcontext :drawable window
-				   :foreground (get-color *frame-foreground*)
-				   :background (get-color *frame-background*)
-				   :font *default-font*
-				   :line-style :solid)))
+  (let* ((window (create-frame-window))
+	 (gc (create-frame-gc window)))
     (apply #'make-instance 'frame :number number :window window :gc gc args)))
 
 
@@ -410,8 +530,8 @@
     (with-slots (x y w h rx ry rw rh) frame
       (setf x (x-px->fl rx parent)
 	    y (y-px->fl ry parent)
-	    w (w-px->fl rw parent)
-	    h (h-px->fl rh parent)))))
+	    w (w-px->fl (anti-adj-border-wh rw parent) parent)
+	    h (h-px->fl (anti-adj-border-wh rh parent) parent)))))
 
 (defun fixe-real-size-current-child ()
   "Fixe real (pixel) coordinates in float coordinates for children in the current child"
@@ -516,40 +636,35 @@
 
 
 (defun display-frame-info (frame)
-  (let ((dy (+ (xlib:max-char-ascent *default-font*) (xlib:max-char-descent *default-font*))))
-    (with-slots (name number gc window child hidden-children) frame
-      (setf (xlib:gcontext-background gc) (get-color *frame-background*)
-	    (xlib:window-background window) (get-color *frame-background*))
-      (clear-pixmap-buffer window gc)
-      (setf (xlib:gcontext-foreground gc) (get-color (if (and (child-equal-p frame *current-root*)
-							      (child-equal-p frame *current-child*))
-							 *frame-foreground-root* *frame-foreground*)))
-      (xlib:draw-glyphs *pixmap-buffer* gc 5 dy
-			(format nil "Frame: ~A~A"
-				number
-				(if name  (format nil " - ~A" name) "")))
-      (let ((pos dy))
-	(when (child-equal-p frame *current-root*)
-	  (xlib:draw-glyphs *pixmap-buffer* gc 5 (incf pos dy)
-			    (format nil "  ~A hidden windows" (length (get-hidden-windows))))
-	  (when *child-selection*
-	    (xlib:draw-glyphs *pixmap-buffer* gc 5 (incf pos dy)
-			      (with-output-to-string (str)
-				(format str "  Selection: ")
-				(dolist (child *child-selection*)
-				  (typecase child
-				    (xlib:window (format str "  ~A " (xlib:wm-name child)))
-				    (frame (format str "  frame:~A[~A] " (frame-number child)
-						   (aif (frame-name child) it "")))))))))
-	(dolist (ch child)
-	  (xlib:draw-glyphs *pixmap-buffer* gc 5 (incf pos dy)
-			    (format nil "  ~A" (ensure-printable (child-fullname ch)))))
-	(setf (xlib:gcontext-foreground gc) (get-color *frame-foreground-hidden*))
-	(dolist (ch hidden-children)
-	  (xlib:draw-glyphs *pixmap-buffer* gc 5 (incf pos dy)
-			    (format nil "  ~A - hidden" (ensure-printable (child-fullname ch))))))
-      (copy-pixmap-buffer window gc)
-      (values t t))))
+  (when (frame-p frame)
+    (let ((dy (+ (xlib:max-char-ascent *default-font*) (xlib:max-char-descent *default-font*))))
+      (with-slots (name number gc window child hidden-children) frame
+        (setf (xlib:gcontext-background gc) (get-color *frame-background*)
+              (xlib:window-background window) (get-color *frame-background*))
+        (clear-pixmap-buffer window gc)
+        (setf (xlib:gcontext-foreground gc) (get-color (if (and (child-equal-p frame *current-root*)
+                                                                (child-equal-p frame *current-child*))
+                                                           *frame-foreground-root* *frame-foreground*)))
+        (xlib:draw-glyphs *pixmap-buffer* gc 5 dy
+                          (format nil "Frame: ~A~A"
+                                  number
+                                  (if name  (format nil " - ~A" name) "")))
+        (let ((pos dy))
+          (when (child-equal-p frame *current-root*)
+            (when *child-selection*
+              (xlib:draw-glyphs *pixmap-buffer* gc 5 (incf pos dy)
+                                (with-output-to-string (str)
+                                  (format str "  Selection: ")
+                                  (dolist (child *child-selection*)
+                                    (typecase child
+                                      (xlib:window (format str "  ~A " (xlib:wm-name child)))
+                                      (frame (format str "  frame:~A[~A] " (frame-number child)
+                                                     (aif (frame-name child) it "")))))))))
+          (dolist (ch child)
+            (xlib:draw-glyphs *pixmap-buffer* gc 5 (incf pos dy)
+                              (format nil "  ~A" (ensure-printable (child-fullname ch))))))
+        (copy-pixmap-buffer window gc)
+        (values t t)))))
 
 
 (defun display-all-frame-info (&optional (root *current-root*))
@@ -561,11 +676,18 @@
 
 
 (defun get-parent-layout (child parent)
-  (if (frame-p parent)
-      (aif (frame-layout parent)
-	   (funcall it child parent)
-	   (no-layout child parent))
-      (get-fullscreen-size)))
+  (if (child-equal-p child *current-root*)
+      (get-fullscreen-size)
+      (if (or (frame-p child) (managed-window-p child parent))
+          (if (frame-p parent)
+              (aif (frame-layout parent)
+                   (funcall it child parent)
+                   (no-layout child parent))
+              (get-fullscreen-size))
+          (values (xlib:drawable-x child) (xlib:drawable-y child)
+                  (xlib:drawable-width child) (xlib:drawable-height child)))))
+
+
 
 
 
@@ -584,18 +706,13 @@
           (setf (xlib:drawable-x window) nx
                 (xlib:drawable-y window) ny
                 (xlib:drawable-width window) nw
-                (xlib:drawable-height window) nh)
-          (xlib:display-finish-output *display*))
+                (xlib:drawable-height window) nh))
 	change))))
 
 
 (defmethod adapt-child-to-parent ((frame frame) parent)
-  (multiple-value-bind (nx ny nw nh)
-      (get-parent-layout frame parent)
+  (declare (ignore parent))
     (with-slots (rx ry rw rh window) frame
-      (setf rx nx  ry ny
-	    rw (max nw 1)
-	    rh (max nh 1))
       (let ((change (or (/= (xlib:drawable-x window) rx)
 			(/= (xlib:drawable-y window) ry)
 			(/= (xlib:drawable-width window) rw)
@@ -604,9 +721,8 @@
           (setf (xlib:drawable-x window) rx
                 (xlib:drawable-y window) ry
                 (xlib:drawable-width window) rw
-                (xlib:drawable-height window) rh)
-          (xlib:display-finish-output *display*))
-	change))))
+                (xlib:drawable-height window) rh))
+	change)))
 
 (defmethod adapt-child-to-parent (child parent)
   (declare (ignore child parent))
@@ -624,8 +740,7 @@
 
 (defmethod set-child-stack-order (window child)
   (declare (ignore child))
-  (raise-window window)
-  (xlib:display-finish-output *display*))
+  (raise-window window))
 
 
 
@@ -681,28 +796,6 @@
   ())
 
 
-
-
-(defgeneric child-coordinates (child))
-
-(defmethod child-coordinates ((frame frame))
-  (values (frame-rx frame)
-	  (frame-ry frame)
-	  (+ (frame-rx frame) (frame-rw frame))
-	  (+ (frame-ry frame) (frame-rh frame))))
-
-(defmethod child-coordinates ((window xlib:window))
-  (values (xlib:drawable-x window)
-	  (xlib:drawable-y window)
-	  (+ (xlib:drawable-x window) (xlib:drawable-width window))
-	  (+ (xlib:drawable-y window) (xlib:drawable-height window))))
-
-(defmethod child-coordinates (child)
-  (declare (ignore child))
-  (values 0 0 1 1))
-
-
-
 (defgeneric select-child (child selected))
 
 (labels ((get-selected-color (child selected-p)
@@ -741,20 +834,54 @@
 
 
 
-(defun show-all-children (&optional (from-root-from nil))
-  "Show all children from *current-root*. When from-root-from is true
+
+(defun adapt-frame-to-parent (frame parent)
+  (multiple-value-bind (nx ny nw nh)
+      (get-parent-layout frame parent)
+    (with-slots (rx ry rw rh window) frame
+      (setf rx nx  ry ny
+	    rw (max nw 1)
+	    rh (max nh 1)))))
+
+
+(defun adapt-child-to-rect (rect)
+  (let ((window (typecase (child-rect-child rect)
+                  (xlib:window (when (managed-window-p (child-rect-child rect) (child-rect-parent rect))
+                                 (child-rect-child rect)))
+                  (frame (frame-window (child-rect-child rect))))))
+    (when window
+      (let ((change (or (/= (xlib:drawable-x window) (child-rect-x rect))
+			(/= (xlib:drawable-y window) (child-rect-y rect))
+			(/= (xlib:drawable-width window) (child-rect-w rect))
+			(/= (xlib:drawable-height window) (child-rect-h rect)))))
+        (when change
+          (setf (xlib:drawable-x window) (child-rect-x rect)
+                (xlib:drawable-y window) (child-rect-y rect)
+                (xlib:drawable-width window) (child-rect-w rect)
+                (xlib:drawable-height window) (child-rect-h rect)))
+	change))))
+
+
+
+
+(defun show-all-children (&optional (from-root-frame nil))
+  "Show all children from *current-root*. When from-root-frame is true
 Display all children from root frame and hide those not in *current-root*"
   (let ((geometry-change nil)
-	(previous nil)
-        (displayed-child nil))
+        (displayed-child nil)
+        (hidden-child nil))
     (labels ((in-displayed-list (child)
-               (member child displayed-child :test #'child-equal-p))
+               (member child displayed-child :test (lambda (c rect)
+                                                     (child-equal-p c (child-rect-child rect)))))
+
+             (add-in-hidden-list (child)
+               (pushnew child hidden-child :test #'child-equal-p))
 
              (set-geometry (child parent in-current-root child-current-root-p)
                (if (or in-current-root child-current-root-p)
-                   (when (adapt-child-to-parent child (if child-current-root-p nil parent))
-                     (setf geometry-change t))
-                   (hide-child child)))
+                   (when (frame-p child)
+                     (adapt-frame-to-parent child (if child-current-root-p nil parent)))
+                   (add-in-hidden-list child)))
 
              (recurse-on-frame-child (child in-current-root child-current-root-p selected-p)
                (let ((selected-child (frame-selected-child child)))
@@ -763,11 +890,31 @@ Display all children from root frame and hide those not in *current-root*"
                         (and selected-p (child-equal-p sub-child selected-child))
                         (or in-current-root child-current-root-p)))))
 
+             (hidden-child-p (rect)
+               (dolist (r displayed-child)
+                 (when (rect-hidden-p r rect)
+                   (return t))))
+
              (select-and-display (child parent selected-p)
-               (push child displayed-child)
-               (select-child child selected-p)
-               (show-child child parent previous)
-               (setf previous child))
+               (multiple-value-bind (nx ny nw nh)
+                   (get-parent-layout child parent)
+                 (let ((rect (make-child-rect :child child :parent parent
+                                              :selected-p selected-p
+                                              :x nx :y ny :w nw :h nh)))
+                   (if (hidden-child-p rect)
+                       (add-in-hidden-list child)
+                       (push rect displayed-child)))))
+
+             (display-displayed-child ()
+               (let ((previous nil))
+                 (dolist (rect (nreverse displayed-child))
+                   (when (adapt-child-to-rect rect)
+                     (setf geometry-change t))
+                   (select-child (child-rect-child rect) (child-rect-selected-p rect))
+                   (show-child (child-rect-child rect)
+                               (child-rect-parent rect)
+                               previous)
+                   (setf previous (child-rect-child rect)))))
 
              (rec (child parent selected-p in-current-root)
                (let ((child-current-root-p (child-equal-p child *current-root*)))
@@ -779,9 +926,13 @@ Display all children from root frame and hide those not in *current-root*"
                             (not (in-displayed-list child)))
                    (select-and-display child parent selected-p)))))
 
-      (rec (if from-root-from *root-frame* *current-root*)
-	   nil t (child-equal-p *current-root* *root-frame*))
+      (rec (if from-root-frame *root-frame* *current-root*)
+           nil t (child-equal-p *current-root* *root-frame*))
+      (display-displayed-child)
+      (dolist (child hidden-child)
+        (hide-child child))
       (set-focus-to-current-child)
+      (xlib:display-finish-output *display*)
       geometry-change)))
 
 
@@ -845,10 +996,13 @@ Display all children from root frame and hide those not in *current-root*"
   ())
 
 
-(defun set-current-root (parent window-parent)
+(defun set-current-root (child parent window-parent)
   "Set current root if parent is not in current root"
-  (when (and window-parent (not (find-child parent *current-root*)))
-    (setf *current-root* parent)))
+  (when (and window-parent
+             (not (child-equal-p child *current-root*))
+             (not (find-child parent *current-root*)))
+    (setf *current-root* parent)
+    t))
 
 
 (defun focus-all-children (child parent &optional (window-parent t))
@@ -856,7 +1010,7 @@ Display all children from root frame and hide those not in *current-root*"
 For window: set current child to window or its parent according to window-parent"
   (let ((new-focus (focus-child-rec child parent))
 	(new-current-child (set-current-child child parent window-parent))
-	(new-root (set-current-root parent window-parent)))
+	(new-root (set-current-root child parent window-parent)))
     (or new-focus new-current-child new-root)))
 
 
@@ -963,6 +1117,15 @@ For window: set current child to window or its parent according to window-parent
   (show-all-children))
 
 
+
+(defun prevent-current-*-equal-child (child)
+  " Prevent current-root and current-child equal to child"
+  (when (child-equal-p child *current-root*)
+    (setf *current-root* (find-parent-frame child)))
+  (when (child-equal-p child *current-child*)
+    (setf *current-child* *current-root*)))
+
+
 (defun remove-child-in-frame (child frame)
   "Remove the child in frame"
   (when (frame-p frame)
@@ -976,10 +1139,7 @@ For window: set current child to window or its parent according to window-parent
 
 (defun remove-child-in-all-frames (child)
   "Remove child in all frames from *root-frame*"
-  (when (child-equal-p child *current-root*)
-    (setf *current-root* (find-parent-frame child)))
-  (when (child-equal-p child *current-child*)
-    (setf *current-child* *current-root*))
+  (prevent-current-*-equal-child child)
   (remove-child-in-frames child *root-frame*))
 
 
@@ -997,30 +1157,38 @@ Warning:frame window and gc are freeed."
 
 (defun delete-child-in-all-frames (child)
   "Delete child in all frames from *root-frame*"
-  (when (child-equal-p child *current-root*)
-    (setf *current-root* (find-parent-frame child)))
-  (when (child-equal-p child *current-child*)
-    (setf *current-child* *current-root*))
+  (prevent-current-*-equal-child child)
   (delete-child-in-frames child *root-frame*))
 
-
-(defun delete-child-and-children-in-frames (child root &optional (close-methode 'delete-window))
+(defun delete-child-and-children-in-frames (child root)
   "Delete child and its children in the frame root and in all its children
 Warning:frame window and gc are freeed."
   (when (and (frame-p child) (frame-child child))
     (dolist (ch (frame-child child))
-      (delete-child-and-children-in-frames ch root close-methode)))
-  (delete-child-in-frames child root)
-  (when (xlib:window-p child)
-    (funcall close-methode child)))
+      (delete-child-and-children-in-frames ch root)))
+  (delete-child-in-frames child root))
 
 (defun delete-child-and-children-in-all-frames (child &optional (close-methode 'delete-window))
   "Delete child and its children in all frames from *root-frame*"
-  (when (child-equal-p child *current-root*)
-    (setf *current-root* (find-parent-frame child)))
-  (when (child-equal-p child *current-child*)
-    (setf *current-child* *current-root*))
-  (delete-child-and-children-in-frames child *root-frame* close-methode))
+  (prevent-current-*-equal-child child)
+  (delete-child-and-children-in-frames child *root-frame*)
+  (when (xlib:window-p child)
+    (funcall close-methode child))
+  (show-all-children))
+
+
+(defun clean-windows-in-all-frames ()
+  "Remove all xlib:windows present in *root-frame* and not in the xlib tree"
+  (let ((x-tree (xlib:query-tree *root*)))
+    (with-all-frames (*root-frame* frame)
+      (dolist (child (frame-child frame))
+        (when (xlib:window-p child)
+          (unless (member child x-tree :test #'xlib:window-equal)
+            (prevent-current-*-equal-child child)
+            (setf (frame-child frame)
+                  (child-remove child (frame-child frame)))))))))
+
+
 
 
 
@@ -1089,7 +1257,8 @@ managed."
 	(let ((map-state (xlib:window-map-state win))
 	      (wm-state (window-state win)))
 	  (unless (or (eql (xlib:window-override-redirect win) :on)
-		      (eql win *no-focus-window*))
+		      (eql win *no-focus-window*)
+                      (is-notify-window-p win))
 	    (when (or (eql map-state :viewable)
 		      (eql wm-state +iconic-state+))
 	      (format t "Processing ~S: type=~A ~S~%" (xlib:wm-name win) (window-type win) win)
