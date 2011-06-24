@@ -1,18 +1,18 @@
 Use x-terminal-emulator by default.
 --- a/src/bindings-second-mode.lisp
 +++ b/src/bindings-second-mode.lisp
-@@ -140,11 +140,11 @@
+@@ -158,11 +158,11 @@
    (define-second-key ("v" :control :shift) 'paste-selection-no-clear)
    (define-second-key ("Delete" :control) 'remove-current-child)
    (define-second-key ("Delete") 'delete-current-child)
--  (define-shell (#\c) b-start-xterm "start an xterm" "cd $HOME && exec xterm")
-+  (define-shell (#\c) b-start-x-terminal-emulator "start an x-terminal-emulator" "cd $HOME && exec x-terminal-emulator")
-   (define-shell (#\e) b-start-emacs "start emacs" "cd $HOME && exec emacs")
-   (define-shell (#\e :control) b-start-emacsremote
+-  (define-shell ("c") b-start-xterm "start an xterm" "cd $HOME && exec xterm")
++  (define-shell ("c") b-start-x-terminal-emulator "start an x-terminal-emulator" "cd $HOME && exec x-terminal-emulator")
+   (define-shell ("e") b-start-emacs "start emacs" "cd $HOME && exec emacs")
+   (define-shell ("e" :control) b-start-emacsremote
      "start an emacs for another user"
 -    "exec xterm -e emacsremote")
 +    "exec x-terminal-emulator -e emacsremote")
-   (define-shell (#\h) b-start-xclock "start an xclock" "exec xclock -d")
+   (define-shell ("h") b-start-xclock "start an xclock" "exec xclock -d")
    (define-second-key ("F10" :mod-1) 'fast-layout-switch)
    (define-second-key ("F10" :shift :control) 'toggle-show-root-frame)
 --- a/src/clfswm-info.lisp
@@ -28,7 +28,7 @@ Use x-terminal-emulator by default.
  
 --- a/src/config.lisp
 +++ b/src/config.lisp
-@@ -131,7 +131,7 @@
+@@ -137,7 +137,7 @@
    'Corner "The clfswm terminal name")
  ;;(defparameter *clfswm-terminal-cmd* (format nil "xterm -T ~A -e /bin/bash --noprofile --norc" *clfswm-terminal-name*)
  ;;(defparameter *clfswm-terminal-cmd* (format nil "urxvt -name ~A" *clfswm-terminal-name*)
@@ -50,7 +50,7 @@ Use x-terminal-emulator by default.
  (defun do-nothing ()
 --- a/doc/keys.txt
 +++ b/doc/keys.txt
-@@ -122,7 +122,7 @@
+@@ -139,7 +139,7 @@
    Control Shift        V               Paste the selection in the current frame - Do not clear the selection after paste
    Control              Delete          Remove the current child from its parent frame
                         Delete          Delete the current child and its children in all frames
@@ -61,8 +61,8 @@ Use x-terminal-emulator by default.
                         H               start an xclock
 --- a/doc/keys.html
 +++ b/doc/keys.html
-@@ -1220,7 +1220,7 @@
-             C
+@@ -1407,7 +1407,7 @@
+           C
          </td>
          <td style="color:#0000ff" nowrap>
 -          start an xterm
