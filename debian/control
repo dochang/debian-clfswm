@@ -5,7 +5,7 @@ Maintainer: Debian Common Lisp Team <pkg-common-lisp-devel@lists.alioth.debian.o
 Uploaders: Desmond O. Chang <dochang@gmail.com>
 Build-Depends: debhelper (>= 8~)
 Build-Depends-Indep: asciidoc, xmlto
-Standards-Version: 3.9.1
+Standards-Version: 3.9.2
 Homepage: http://common-lisp.net/project/clfswm/
 Vcs-Git: git://git.debian.org/pkg-common-lisp/clfswm.git
 Vcs-Browser: http://git.debian.org/?p=pkg-common-lisp/clfswm.git;a=summary
