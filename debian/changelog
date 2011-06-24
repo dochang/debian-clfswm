@@ -7,6 +7,7 @@ clfswm (20110616.git216af7b-1) unstable; urgency=low
   * put manpage in debian/
   * put startup script in debian/
   * move startup options into load.lisp
+  * upgrade debhelper compatibility level to 8
 
  --
 

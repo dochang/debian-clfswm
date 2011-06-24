@@ -3,7 +3,7 @@ Section: x11
 Priority: optional
 Maintainer: Debian Common Lisp Team <pkg-common-lisp-devel@lists.alioth.debian.org>
 Uploaders: Desmond O. Chang <dochang@gmail.com>
-Build-Depends: debhelper (>= 7.0.50~)
+Build-Depends: debhelper (>= 8~)
 Build-Depends-Indep: asciidoc, xmlto
 Standards-Version: 3.9.1
 Homepage: http://common-lisp.net/project/clfswm/
