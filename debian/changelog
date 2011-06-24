@@ -10,7 +10,7 @@ clfswm (20110616.git216af7b-1) unstable; urgency=low
   * upgrade debhelper compatibility level to 8
   * upgrade Standards-Version to 3.9.2
 
- --
+ -- Desmond O. Chang <dochang@gmail.com>  Sat, 25 Jun 2011 00:05:06 +0800
 
 clfswm (20110418.git050d0a2-1) unstable; urgency=low
 
