@@ -1,1 +1,2 @@
 *.asd src contrib usr/share/common-lisp/source/clfswm
+debian/load.lisp usr/lib/clfswm
