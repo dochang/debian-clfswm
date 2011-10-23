@@ -1,8 +1,8 @@
-clfswm (20111015.git51b0a02-1) UNRELEASED; urgency=low
+clfswm (20111015.git51b0a02-1) unstable; urgency=low
 
   * refresh debian/patches
 
- --
+ -- Desmond O. Chang <dochang@gmail.com>  Mon, 24 Oct 2011 03:06:27 +0800
 
 clfswm (20110616.git216af7b-1) unstable; urgency=low
 
