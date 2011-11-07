@@ -1,3 +1,10 @@
+;;;; This file is part of the Debian CLFSWM package and is licensed
+;;;; under the terms of GPL-3 or later.  Check
+;;;; /usr/share/doc/clfswm/copyright for more information.
+;;;;
+;;;; Copyright 2011 Desmond O. Chang <dochang@gmail.com>
+
+
 (in-package :cl-user)
 
 #+clisp

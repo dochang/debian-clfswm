@@ -1,5 +1,11 @@
 #!/bin/sh
 #
+# This file is part of the Debian CLFSWM package and is licensed under
+# the terms of the GNU GPL version 3 or later.  Check
+# /usr/share/doc/clfswm/copyright for more information.
+#
+# Copyright 2011 Desmond O. Chang <dochang@gmail.com>
+#
 # CLFSWM startup file.  Check /usr/share/doc/clfswm/README.Debian to
 # know how to setup the Common Lisp implementation CLFSWM should use.
 
