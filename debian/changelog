@@ -1,3 +1,9 @@
+clfswm (20111015.git51b0a02-2) UNRELEASED; urgency=low
+
+  * 
+
+ --
+
 clfswm (20111015.git51b0a02-1) unstable; urgency=low
 
   * refresh debian/patches
