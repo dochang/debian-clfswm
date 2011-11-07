@@ -1,6 +1,7 @@
 clfswm (20111015.git51b0a02-2) UNRELEASED; urgency=low
 
-  * 
+  * debian/load.lisp
+    + hot-upgrade ASDF if user has a local version of ASDF
 
  --
 
